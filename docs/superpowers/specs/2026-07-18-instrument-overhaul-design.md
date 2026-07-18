@@ -13,6 +13,18 @@ Make Apex Measure Pro look and feel like a state-of-the-art precision instrument
 
 **Chosen aesthetic direction: Hybrid "A + C" — Avionics-HUD identity on flat, sunlight-legible screens.** The armed cell gets a heads-up-display *reticle-lock* treatment (the signature "wow" moment), rendered on flat blackout screens with high-legibility readouts (camera-viewfinder restraint) so a moving element never competes with the live number. The luxury "machined bezel sheen" (direction B) is held in reserve for non-critical flourishes (BLE connecting, export completion), never on the capture cell.
 
+### Scope decision (office-hours, 2026-07-18)
+
+The overhaul was pressure-tested and **deliberately narrowed** from "aggressive full restyle" to a **focused pass**. Rationale: the app is a live tool with paying installers and already went through one design pass (roughly 70-80% of the instrument look is shipped). The real business risks named in the handoff are legal and functional (no Terms/Privacy, blank `PORTAL_URL` so "cancel anytime" has no working button, gating not hardened, no job history), not that the capture screen needs more motion.
+
+**In scope (this spec):**
+- First-run email gate and locked-subscription screen — the surfaces a paying subscriber judges you on (§4.8).
+- The two agreed capture gaps: armed-cell reticle-lock (§4.2) and empty-state treatment (§4.1).
+
+**Left as-is (not gold-plated):** the daily capture cell readout/bezel (already shipped and correct), lock countdown, lock snap, BLE indicator, export morph, and chrome. Refine only if trivially free while in the file; never at the cost of touching the arm-shoot-lock flow.
+
+**Next priority after this (separate work, flagged, not part of this spec):** Terms/Privacy, a working cancel link (`PORTAL_URL`), gating hardening, job history. These outrank any further visual polish.
+
 ### Locked tokens (unchanged)
 - Colors: bronze `#B08D57` / `#C9A87C` on near-black `#0F0F10`; existing `--panel #16161A`, `--panel-2 #1E1E23`, `--screen #0B0B0C`, `--ink #F5F2EC`, `--muted #A8A29A`, `--line #2A2A2E`, `--good #35c46b`.
 - Type: **Sora** (display) + **Inter** (body).
@@ -53,38 +65,40 @@ This overhaul is a **skin swap on a frozen skeleton.** The following are out of 
 
 ## 4. Component & state specification (mapped to locked decisions #1–#8)
 
-### 4.1 Empty cell / blank-job screen (decision #6)
+> **Scope tags** (per the office-hours decision above): **[BUILD]** = do it this pass. **[KEEP]** = already shipped and correct, leave it; touch only if free. Items are tagged inline below.
+
+### 4.1 Empty cell / blank-job screen (decision #6) — [BUILD]
 - Per-cell: dim recessed screen, faint bronze `.clabel`, and a single subtle dimmed tick/dot mark. **No** repeated "Ready for Capture" text in each cell.
 - Screen level: one calm line of copy on the armbar (e.g. "Ready for capture — arm a Width or Height cell"). Optional (user decision, §10): a faint centered logo watermark behind `#rows` on a fully-empty job.
 
-### 4.2 Armed cell (decision #3)
+### 4.2 Armed cell (decision #3) — [BUILD]
 - Corner reticle brackets fade+scale in via `.cell.armed::before/::after`.
 - Outer drop-shadow elevation + `transform: translateY(-1px)` (already present) with smoothed `transition` on focus change (already present at `0.25s cubic-bezier`).
 - Border glow breathes on **opacity only**.
 - No new DOM; no JS change.
 
-### 4.3 Lock countdown (decision #4)
+### 4.3 Lock countdown (decision #4) — [KEEP]
 - Keep the existing `.lockbar` `<i>` tracing the bottom inner edge L→R over `LOCK_MS` (`@keyframes lockcount 3s`). Sharpen the glow and edge; timing unchanged.
 
-### 4.4 Lock snap (decision #4)
+### 4.4 Lock snap (decision #4) — [KEEP]
 - Keep `@keyframes lockSnap` scale-pulse on `.cell.locked`; tighten it. Stays synced to the existing lock (which fires `buzz`). Purely CSS; no timing change.
 
-### 4.5 Filled / locked cell
+### 4.5 Filled / locked cell — [KEEP]
 - Green detent + `✓` on `.clabel::after` (already present); refine to match the instrument look.
 
-### 4.6 Export completion (decision #5)
+### 4.6 Export completion (decision #5) — [KEEP]
 - `#exportBtn.success-anim` morphs into a glowing bronze checkmark, holds ~800ms while `#rows.fading` fades the new blank job in behind it. **Wraps the existing instant download — never gates or delays it** (the file `a.click()` fires first, unchanged). Reuse a subtle B-style bronze sheen here as the flourish.
 
-### 4.7 BLE indicator (decision #8)
+### 4.7 BLE indicator (decision #8) — [KEEP]
 - Connected: breathing glow (`@keyframes breathe`, opacity + box-shadow oscillation) — kept, refined.
 - Searching/reconnecting (`.dot.wait`): radar sweep (`@keyframes radar`) — kept, made clearly distinct from connected.
 - Connecting handshake: brief B-style bronze sheen flourish.
 
-### 4.8 Gate screens (decision #7)
+### 4.8 Gate screens (decision #7) — [BUILD]
 - `#gateEmail` (first-run) and `#gateLocked` (inactive subscription) rebuilt as **elevated machined cards**: bronze rule, calibrated type, recessed inputs, matching the empty-state polish. These are a paying subscriber's first/recurring impression.
 - Preserve distinct visual slots for the future `device_limit` / `rate_limited` messages (text set by JS into `#gateLockedMsg`).
 
-### 4.9 Chrome
+### 4.9 Chrome — [KEEP]
 - Header, `.armbar`, `.jobbar`, `.mount` select, `.export-btn`, `.template-btn`, `.addrow`, `.foot` restyled into the system. Touch targets preserved (§8).
 
 ---
