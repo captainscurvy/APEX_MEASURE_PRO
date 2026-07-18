@@ -1,4 +1,4 @@
-package com.apexinstallations.measurepro;
+package com.apexinstallationsok.measurepro;
 
 import com.getcapacitor.BridgeActivity;
 
