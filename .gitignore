@@ -1,0 +1,11 @@
+# Pre-bundled Netlify function (Stripe compiled in) — keep the readable source out of git.
+apex-measure-pro_1/netlify/functions/check-access.js
+
+# Internal handoff doc — Stripe IDs, payment link, admin email, strategy. Do not publish.
+apex-measure-pro_1/apex-measure-pro-handoff_1.md
+
+# Netlify local state / noise
+.netlify/
+*.log
+.DS_Store
+Thumbs.db
