@@ -1,0 +1,9 @@
+# Apex Measure — static single-page deploy, no build step.
+[build]
+  publish = "."
+
+# Web Bluetooth is allowed for top-level HTTPS pages by default; be explicit.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Permissions-Policy = "bluetooth=(self)"
