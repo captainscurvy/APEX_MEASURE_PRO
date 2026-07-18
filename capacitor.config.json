@@ -1,0 +1,8 @@
+{
+  "appId": "com.apexinstallations.measurepro",
+  "appName": "Apex Measure Pro",
+  "webDir": "apex-measure-pro_1",
+  "server": {
+    "androidScheme": "https"
+  }
+}

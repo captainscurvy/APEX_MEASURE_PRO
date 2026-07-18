@@ -9,3 +9,14 @@ apex-measure-pro_1/apex-measure-pro-handoff_1.md
 *.log
 .DS_Store
 Thumbs.db
+
+# Node / Capacitor
+node_modules/
+android/app/build/
+android/build/
+android/.gradle/
+android/local.properties
+ios/App/build/
+ios/App/Pods/
+*.apk
+*.aab
