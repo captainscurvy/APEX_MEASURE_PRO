@@ -1,0 +1,16 @@
+# Apex Measure — static single-page deploy + serverless access-check function.
+[build]
+  publish = "."
+
+# Serverless functions (subscription gating). Requires a bundling deploy
+# (Netlify CLI `netlify deploy` or Git-connected build) so npm deps are
+# installed/bundled — a plain drag-and-drop of the folder will NOT bundle them.
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+
+# Web Bluetooth is allowed for top-level HTTPS pages by default; be explicit.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Permissions-Policy = "bluetooth=(self)"

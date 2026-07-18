@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#0F0F10" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Apex Measure Pro" />
+<link rel="manifest" href="manifest.json" />
+<link rel="icon" href="icon-192.png" />
+<link rel="apple-touch-icon" href="icon-192.png" />
+<title>Apex Measure Pro — Apex Installations</title>
+<style>
+  /* Apex brand tokens — ported from apex_site (DESIGN.md "Refine the Chrome"). */
+  :root {
+    --bg: #0F0F10; --panel: #16161A; --panel-2: #1E1E23; --ink: #F5F2EC;
+    --muted: #A8A29A; --line: #2A2A2E; --accent: #B08D57; --accent-hi: #C9A87C;
+    --good: #35c46b; --bad: #ff6b6b; --warn: #E0A94E; --armed: #C9A87C;
+    --display: 'Sora', system-ui, sans-serif; --body: 'Inter', system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; }
+  body {
+    background: #0B0B0C;
+    background-image: linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+    background-size: 20px 20px;
+    color: var(--ink); font-family: var(--body);
+    padding: env(safe-area-inset-top) 14px calc(16px + env(safe-area-inset-bottom));
+    max-width: 640px; margin: 0 auto; min-height: 100vh;
+  }
+  header { display: flex; align-items: baseline; justify-content: space-between; padding: 16px 2px 6px; }
+  .brand { font-family: var(--display); font-size: 21px; font-weight: 800; letter-spacing: .04em; display: inline-flex; align-items: center; }
+  .brand .logomark { height: 25px; width: auto; margin-right: 9px; }
+  .brand b { font-weight: 800; color: var(--ink); } .brand .light { color: var(--accent-hi); font-weight: 700; }
+  .ver { color: var(--muted); font-size: 11px; letter-spacing: .18em; text-transform: uppercase; }
+
+  .status { display: flex; align-items: center; gap: 9px; background: var(--panel);
+    border: 1px solid var(--line); border-radius: 999px; padding: 8px 13px; margin: 4px 2px 0; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--muted); flex: 0 0 auto; }
+  .dot.on { background: var(--good); animation: breathe 3s infinite ease-in-out; }
+  .dot.off { background: var(--bad); } 
+  .dot.wait { background: transparent; border: 2px solid var(--warn); animation: radar 1.5s infinite linear; }
+  @keyframes breathe { 0%, 100% { opacity: 0.7; box-shadow: 0 0 6px var(--good); } 50% { opacity: 1; box-shadow: 0 0 14px var(--good); } }
+  @keyframes radar { 0% { transform: scale(0.5); opacity: 1; } 100% { transform: scale(1.5); opacity: 0; } }
+  .status .txt { font-size: 13px; } .status .txt small { display: block; color: var(--muted); font-size: 11px; }
+  .status button { margin-left: auto; }
+  .mini { background: none; border: 1px solid var(--line); color: var(--ink); border-radius: 999px;
+    padding: 7px 14px; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .mini.primary { color: #14110B; border: 1px solid rgba(255,255,255,.18);
+    background: linear-gradient(180deg, var(--accent-hi), var(--accent));
+    box-shadow: 0 6px 22px -8px rgba(176,141,87,.6), inset 0 1px 0 rgba(255,255,255,.35); }
+
+  /* armed banner — the "shoot now" cue */
+  .armbar { margin: 10px 2px 0; border-radius: 12px; padding: 11px 14px; font-size: 14px; font-weight: 600;
+    background: var(--panel); border: 1px solid var(--line); color: var(--muted);
+    display: flex; align-items: center; gap: 10px; min-height: 44px; }
+  .armbar.live { background: rgba(201,168,124,.12); border-color: var(--armed); color: var(--ink); }
+  .armbar .last { margin-left: auto; font-variant-numeric: tabular-nums; color: var(--muted); font-weight: 500; font-size: 12.5px; }
+  .armbar.stray { border-color: var(--warn); color: var(--warn); }
+
+  /* job header */
+  .jobbar { display: flex; align-items: center; gap: 8px; margin: 12px 2px 6px; }
+  .jobbar input { flex: 1; background: var(--panel); border: 1px solid var(--line); color: var(--ink);
+    border-radius: 6px; padding: 11px 12px; font-size: 15px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2); }
+  .jobbar button { background: var(--panel-2); border: 1px solid var(--line); color: var(--ink);
+    border-radius: 6px; padding: 11px 13px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+
+  /* capture — one card per line: [Line# · Room] then [Width | Height] */
+  .line { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 10px 10px 11px; margin-bottom: 10px; }
+  .line .top { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .line .no { width: 30px; height: 30px; flex: 0 0 auto; border-radius: 4px; background: var(--panel-2);
+    display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px;
+    color: var(--muted); font-variant-numeric: tabular-nums; box-shadow: inset 0 1px 3px rgba(0,0,0,0.3); }
+  .line .room { flex: 1; min-width: 0; background: var(--panel-2); border: 1px solid var(--line); color: var(--ink);
+    border-radius: 4px; padding: 10px 11px; font-size: 15px; box-shadow: inset 0 1px 3px rgba(0,0,0,0.3); }
+  .line .room::placeholder { color: #5a544c; font-style: italic; }
+  .line .mount { flex: 0 0 auto; width: 78px; background: var(--panel-2); border: 1px solid var(--line);
+    color: var(--ink); border-radius: 4px; padding: 10px 6px; font-size: 14px; font-weight: 600;
+    -webkit-appearance: none; appearance: none; text-align: center; text-align-last: center; box-shadow: inset 0 1px 3px rgba(0,0,0,0.3); }
+  .cells { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .cell { position: relative; background: var(--panel-2); border: 1px solid var(--line); border-radius: 4px;
+    min-height: 66px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    cursor: pointer; font-variant-numeric: tabular-nums; user-select: none; padding-top: 6px;
+    box-shadow: inset 0 2px 8px rgba(0,0,0,0.4); transition: all 0.25s cubic-bezier(0.4, 0.0, 0.2, 1); overflow: hidden; }
+  .cell .clabel { position: absolute; top: 6px; left: 10px; font-size: 10px; letter-spacing: .14em;
+    text-transform: uppercase; color: var(--accent); font-weight: 600; z-index: 2; }
+  .cell .val { font-size: 24px; font-weight: 500; line-height: 1; margin-top: 8px; letter-spacing: -0.02em; text-shadow: 0 0 8px rgba(201,168,124,0.3); z-index: 2; position: relative; }
+  .cell .val .den, .cell .val .num { font-size: 14px; }
+  .cell.empty .val { color: #3d4757; font-weight: 400; font-size: 20px; margin-top: 8px; text-shadow: none; }
+  .cell.armed { border-color: var(--armed); background: #1a1a1f;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5), inset 0 0 0 1px var(--armed), 0 0 0 1px var(--armed); z-index: 5; transform: translateY(-1px); }
+  .cell .raw { font-size: 10.5px; color: var(--muted); margin-top: 3px; z-index: 2; position: relative; }
+  .cell .edit { position: absolute; top: 3px; right: 4px; width: 28px; height: 28px; display: flex;
+    align-items: center; justify-content: center; color: var(--muted); font-size: 15px; border-radius: 4px; z-index: 3; }
+  .cell .edit:active { background: rgba(201,168,124,.2); color: var(--accent-hi); }
+  .cell .clear { position: absolute; top: 3px; right: 36px; width: 28px; height: 28px; display: flex;
+    align-items: center; justify-content: center; color: var(--muted); font-size: 19px; border-radius: 4px; z-index: 3; }
+  .cell .clear:active { background: rgba(255,90,90,.22); color: var(--bad); }
+  .cell.editing { cursor: default; }
+  .cell .minput { width: 84%; margin-top: 6px; background: #0B0B0C; border: 1px solid var(--armed);
+    color: var(--ink); border-radius: 4px; padding: 8px; font-size: 20px; font-weight: 500; text-align: center;
+    font-variant-numeric: tabular-nums; letter-spacing: -0.02em; text-shadow: 0 0 8px rgba(201,168,124,0.3); box-shadow: inset 0 2px 4px rgba(0,0,0,0.5); z-index: 3; position: relative; }
+  .cell.flash { animation: flashfill .6s ease-out; }
+  @keyframes flashfill { 0% { background: rgba(201,168,124,.3); } 100% { background: var(--panel-2); } }
+  /* auto-lock countdown cue: glowing linear progress at the bottom edge (3s == LOCK_MS) */
+  .cell .lockbar { position: absolute; left: 0; bottom: 0; height: 3px; width: 100%; display: none;
+    transform-origin: left center; border-radius: 0; z-index: 1;
+    background: linear-gradient(90deg, var(--accent-hi), var(--accent)); box-shadow: 0 -2px 10px rgba(201,168,124,0.6); }
+  .cell.counting .lockbar { display: block; animation: lockcount 3s linear forwards; }
+  @keyframes lockcount { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+  /* LOCKED: settled after the countdown */
+  .cell.locked { border-color: rgba(53,196,107,.5); box-shadow: inset 0 2px 8px rgba(0,0,0,0.4), inset 0 0 0 1px rgba(53,196,107,.15); animation: lockSnap 0.15s ease-out; }
+  @keyframes lockSnap { 0% { transform: scale(1); } 50% { transform: scale(0.97); } 100% { transform: scale(1); } }
+  .cell.locked .clabel { color: var(--good); }
+  .cell.locked .clabel::after { content: " \2713"; text-shadow: 0 0 6px rgba(53,196,107,0.5); }
+  .addrow { text-align: center; margin: 2px 2px 0; }
+  .addrow button { background: none; border: 1px dashed var(--line); color: var(--muted);
+    border-radius: 12px; padding: 12px; width: 100%; font-size: 14px; font-weight: 600; cursor: pointer; }
+  .foot { color: var(--muted); font-size: 11.5px; text-align: center; margin-top: 14px; line-height: 1.5; }
+  .export-btn { width: 100%; margin: 12px 0 0; color: #14110B; border: 1px solid rgba(255,255,255,.18);
+    background: linear-gradient(180deg, var(--accent-hi), var(--accent));
+    box-shadow: 0 6px 22px -8px rgba(176,141,87,.6), inset 0 1px 0 rgba(255,255,255,.35);
+    border-radius: 6px; padding: 15px; font-size: 16px; font-weight: 700; cursor: pointer; transition: all 0.3s; }
+  .export-btn:active { transform: translateY(1px); }
+  .template-btn { width: 100%; margin: 8px 0 0; background: none; border: 1px solid var(--accent);
+    color: var(--accent-hi); border-radius: 6px; padding: 13px; font-size: 15px; font-weight: 600; cursor: pointer; }
+  .template-btn:active { background: rgba(201,168,124,.1); }
+  .connect-cta { display: block; width: 100%; margin: 8px 2px 0; background: var(--accent);
+    border: 0; color: #fff; border-radius: 6px; padding: 15px; font-size: 16px; font-weight: 700; cursor: pointer; }
+
+  /* ---- Subscription access gate overlays (shown only when needed) ---- */
+  .gate { position: fixed; inset: 0; z-index: 1000; background: rgba(10,10,11,.85); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    display: none; align-items: center; justify-content: center; padding: 24px; }
+  .gate.show { display: flex; }
+  .gate .card { background: var(--panel); border: 1px solid var(--accent); border-radius: 6px;
+    padding: 24px 20px; max-width: 380px; width: 100%; text-align: center;
+    box-shadow: 0 20px 60px -10px rgba(0,0,0,0.8), inset 0 1px 3px rgba(255,255,255,0.05), 0 0 0 1px rgba(201,168,124,0.15); }
+  .gate .card h2 { font-family: var(--display); font-size: 19px; margin: 0 0 8px; color: var(--ink); text-shadow: 0 0 12px rgba(201,168,124,0.3); }
+  .gate .card p { color: var(--muted); font-size: 13.5px; line-height: 1.5; margin: 0 0 16px; }
+  .gate .card input { width: 100%; background: #0B0B0C; border: 1px solid var(--line); color: var(--ink);
+    border-radius: 4px; padding: 12px; font-size: 15px; margin-bottom: 10px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.5); }
+  .gate .card input:focus { border-color: var(--accent); outline: none; box-shadow: inset 0 2px 4px rgba(0,0,0,0.5), 0 0 0 1px var(--accent); }
+  .gate .card .gbtn { display: block; width: 100%; text-align: center; color: #14110B;
+    border: 1px solid rgba(255,255,255,.18); background: linear-gradient(180deg, var(--accent-hi), var(--accent));
+    border-radius: 4px; padding: 13px; font-size: 15px; font-weight: 700; cursor: pointer; text-decoration: none; }
+  .gate .card .err { color: var(--bad); font-size: 12.5px; min-height: 16px; margin-bottom: 6px; }
+  .gate .card .glink { display: inline-block; margin: 14px 8px 0; color: var(--accent-hi);
+    font-size: 13px; text-decoration: underline; cursor: pointer; }
+  .gate .card .who { color: var(--muted); font-size: 11.5px; margin-top: 14px; word-break: break-all; }
+  .acctlink { display: inline-block; margin-top: 6px; color: var(--accent-hi); font-size: 11.5px;
+    text-decoration: underline; cursor: pointer; }
+  .success-anim { font-size: 0 !important; }
+  .success-anim::after { content: '\2713'; font-size: 20px; font-weight: 800; color: #14110B; text-shadow: 0 0 8px rgba(255,255,255,0.4); display: block; animation: checkPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+  @keyframes checkPop { 0% { transform: scale(0); } 100% { transform: scale(1); } }
+  #rows { transition: opacity 0.4s ease; }
+  #rows.fading { opacity: 0; }
+</style>
+</head>
+<body>
+  <header>
+    <div class="brand"><img class="logomark" src="logo-mark-512.png" alt="" /><b>Apex Measure</b><span class="light">&nbsp;Pro</span></div>
+    <div class="ver">by Apex Installations</div>
+  </header>
+
+  <div class="status">
+    <div class="dot" id="dot"></div>
+    <div class="txt"><span id="statusText">Not connected</span><small id="statusMeta">Chrome on Android, HTTPS.</small></div>
+    <button class="mini primary" id="connectBtn">Connect</button>
+    <button class="mini" id="disconnectBtn" style="display:none">Disconnect</button>
+  </div>
+
+  <div class="armbar" id="armbar">
+    <span id="armText">Tap a Width or Height cell to arm it, then shoot.</span>
+    <span class="last" id="lastShot"></span>
+  </div>
+
+  <div class="jobbar">
+    <input id="jobName" placeholder="Job name" />
+    <button id="newJobBtn">New job</button>
+  </div>
+
+  <div id="rows"></div>
+  <div class="addrow"><button id="addLineBtn">+ Add line</button></div>
+
+  <button id="exportBtn" class="export-btn">Export to Excel (.xlsx)</button>
+  <button id="templateBtn" class="template-btn">Blank template (fill in Excel)</button>
+  <div class="foot" id="foot">Saved on this phone · exports as Line · Room · Width · Height · Mount.<br><a class="acctlink" id="acctChange">Subscription &amp; account</a></div>
+
+  <!-- Subscription access gate overlays (hidden unless needed) -->
+  <div class="gate" id="gateEmail">
+    <div class="card">
+      <h2>Apex Measure Pro</h2>
+      <p>Enter the email used for your Apex Measure Pro subscription.</p>
+      <div class="err" id="gateEmailErr"></div>
+      <input id="gateEmailInput" type="email" inputmode="email" autocomplete="email" placeholder="you@email.com" />
+      <button class="gbtn" id="gateEmailSave">Continue</button>
+    </div>
+  </div>
+  <div class="gate" id="gateLocked">
+    <div class="card">
+      <h2>Subscription inactive</h2>
+      <p id="gateLockedMsg">Your Apex Measure Pro subscription isn't active.</p>
+      <a class="gbtn" id="gateManage" href="#" target="_blank" rel="noopener">Manage subscription</a>
+      <div><span class="glink" id="gateRecheck">Re-check now</span><span class="glink" id="gateChangeEmail">Change email</span></div>
+      <div class="who" id="gateLockedEmail"></div>
+    </div>
+  </div>
+
+<script src="reduce.js"></script>
+<script src="exceljs.min.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  /* =========================================================
+     1. Local storage (IndexedDB) — one object store of jobs.
+     ========================================================= */
+  var DB_NAME = "apex-measure", STORE = "jobs", db = null;
+  function openDB() {
+    return new Promise(function (resolve, reject) {
+      var req = indexedDB.open(DB_NAME, 1);
+      req.onupgradeneeded = function () {
+        if (!req.result.objectStoreNames.contains(STORE)) req.result.createObjectStore(STORE, { keyPath: "id" });
+      };
+      req.onsuccess = function () { resolve(req.result); };
+      req.onerror = function () { reject(req.error); };
+    });
+  }
+  function putJob(job) {
+    return new Promise(function (resolve, reject) {
+      var tx = db.transaction(STORE, "readwrite");
+      tx.objectStore(STORE).put(job);
+      tx.oncomplete = resolve; tx.onerror = function () { reject(tx.error); };
+    });
+  }
+  function getJob(id) {
+    return new Promise(function (resolve, reject) {
+      var tx = db.transaction(STORE, "readonly");
+      var r = tx.objectStore(STORE).get(id);
+      r.onsuccess = function () { resolve(r.result || null); }; r.onerror = function () { reject(r.error); };
+    });
+  }
+
+  /* =========================================================
+     2. Job model + arm-and-shoot state.
+     ========================================================= */
+  var job = null;              // { id, name, createdAt, updatedAt, lines: [{n, w, h}] }  w/h = {inches,meters}|null
+  var armed = null;            // { idx, field: 'w'|'h' } | null
+  var CUR_KEY = "apex.currentJobId";
+  // Auto-lock / auto-advance state — session only, NOT persisted (IndexedDB schema unchanged).
+  var LOCK_MS = 3000;                     // must match the .counting CSS animation (3s)
+  var lockTimer = null;                   // setTimeout handle for the counting-down armed cell
+  var lockedKeys = Object.create(null);   // "idx:field" -> true; cells that settled after the countdown
+  function keyOf(idx, field) { return idx + ":" + field; }
+
+  function nowISO() { return new Date().toISOString(); }
+  function freshJob() {
+    var d = new Date();
+    var id = "job-" + d.getTime();
+    var name = "Job " + d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+    var lines = [];
+    for (var i = 1; i <= 6; i++) lines.push({ n: i, room: "", mount: "", w: null, h: null });
+    return { id: id, name: name, createdAt: nowISO(), updatedAt: nowISO(), lines: lines };
+  }
+  function save() { if (!job) return; job.updatedAt = nowISO(); putJob(job).catch(function () {}); }
+
+  // After a successful PRICED export: keep the exported job saved in IndexedDB, but
+  // swap the ACTIVE job to a fresh blank one so the screen is a clean slate immediately.
+  function startFreshAfterExport() {
+    clearLockTimer(); lockedKeys = Object.create(null);   // reset session lock state (change 1)
+    job = freshJob(); armed = null;                       // exported job stays in IndexedDB, untouched
+    localStorage.setItem(CUR_KEY, job.id);                // point "current job" at the new blank one
+    save();                                               // persist the new blank job
+    render();                                             // refresh UI now — no reopen needed
+  }
+
+  /* =========================================================
+     3. Rendering.
+     ========================================================= */
+  var $ = function (id) { return document.getElementById(id); };
+  var rowsEl = $("rows"), armbar = $("armbar"), armText = $("armText"), lastShot = $("lastShot");
+
+  function fracHTML(cell) {
+    if (!cell) return '<span class="val">—</span>';
+    var r = Reduce.reduceInches(cell.inches);
+    var f = r.num === 0 ? '' : '<span class="num">' + r.num + '</span>/<span class="den">' + r.den + '</span>';
+    var main = r.whole + (f ? ' ' + f : '') + '&Prime;';
+    return '<span class="val">' + main + '</span><span class="raw">' + cell.inches.toFixed(3) + '&Prime;</span>';
+  }
+
+  function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
+  function mountSelectHTML(idx, mount) {
+    function opt(v, label) { return '<option value="' + v + '"' + (mount === v ? " selected" : "") + '>' + label + '</option>'; }
+    return '<select class="mount" data-idx="' + idx + '">' + opt("", "Mount") + opt("IB", "IB") + opt("OB", "OB") + '</select>';
+  }
+  function render() {
+    $("jobName").value = job.name;
+    rowsEl.innerHTML = "";
+    job.lines.forEach(function (ln, idx) {
+      var div = document.createElement("div");
+      div.className = "line";
+      div.innerHTML =
+        '<div class="top">' +
+          '<span class="no">' + ln.n + '</span>' +
+          '<input class="room" data-idx="' + idx + '" placeholder="Room" value="' + esc(ln.room || "") + '" />' +
+          mountSelectHTML(idx, ln.mount || "") +
+        '</div>' +
+        '<div class="cells">' +
+          cellHTML(idx, "w", "Width", ln.w) +
+          cellHTML(idx, "h", "Height", ln.h) +
+        '</div>';
+      rowsEl.appendChild(div);
+    });
+    // arm on cell tap
+    Array.prototype.forEach.call(rowsEl.querySelectorAll(".cell"), function (el) {
+      el.addEventListener("click", function () { if (editing) return; armCell(+el.dataset.idx, el.dataset.field); });
+    });
+    // room typing updates the model + saves, WITHOUT re-render (keeps caret focus)
+    Array.prototype.forEach.call(rowsEl.querySelectorAll(".room"), function (el) {
+      el.addEventListener("input", function () { job.lines[+el.dataset.idx].room = el.value; save(); });
+    });
+    // mount (IB/OB) select updates the model + saves
+    Array.prototype.forEach.call(rowsEl.querySelectorAll(".mount"), function (el) {
+      el.addEventListener("change", function () { job.lines[+el.dataset.idx].mount = el.value; save(); });
+    });
+    // ✕ clears a filled cell (don't let the tap also arm it)
+    Array.prototype.forEach.call(rowsEl.querySelectorAll(".clear"), function (el) {
+      el.addEventListener("click", function (ev) {
+        ev.stopPropagation();
+        var i = +el.dataset.idx, f = el.dataset.field;
+        if (armed && armed.idx === i && armed.field === f) clearLockTimer();  // cancel countdown on the cleared cell
+        delete lockedKeys[keyOf(i, f)];                                       // ✕ works on a locked cell; emptied ≠ locked
+        job.lines[i][f] = null; save(); render();
+      });
+    });
+    // ✎ opens a manual-entry input in the cell (type by hand instead of the laser)
+    Array.prototype.forEach.call(rowsEl.querySelectorAll(".edit"), function (el) {
+      el.addEventListener("click", function (ev) {
+        ev.stopPropagation();
+        var i = +el.dataset.idx, f = el.dataset.field;
+        clearLockTimer(); delete lockedKeys[keyOf(i, f)];   // ✎ works on a locked cell & counts as re-selecting it
+        editing = { idx: i, field: f }; render();
+      });
+    });
+    var mi = rowsEl.querySelector(".minput");
+    if (mi) {
+      mi.focus();
+      mi.addEventListener("keydown", function (ev) {
+        if (ev.key === "Enter") { ev.preventDefault(); commitManual(+mi.dataset.idx, mi.dataset.field, mi.value); }
+        else if (ev.key === "Escape") { editing = null; render(); }
+      });
+      mi.addEventListener("blur", function () { if (editing) commitManual(+mi.dataset.idx, mi.dataset.field, mi.value); });
+    }
+    renderArmbar();
+  }
+  // Manual entry: parse "34 7/8", "7/8", "34.875", or "34" to inches. null = cleared, NaN = unparseable.
+  var editing = null;
+  function parseInches(s) {
+    s = String(s).trim(); if (!s) return null;
+    var m = s.match(/^(\d+)\s+(\d+)\/(\d+)$/); if (m) return +m[1] + (+m[2]) / (+m[3]);
+    m = s.match(/^(\d+)\/(\d+)$/); if (m) return (+m[1]) / (+m[2]);
+    if (/^\d+(\.\d+)?$/.test(s)) return parseFloat(s);
+    return NaN;
+  }
+  function cellText(cell) {
+    if (!cell) return "";
+    var rr = Reduce.reduceInches(cell.inches);
+    return rr.whole + (rr.num ? " " + rr.num + "/" + rr.den : "");
+  }
+  function commitManual(idx, field, raw) {
+    var v = parseInches(raw), committed = false;
+    if (v === null) { job.lines[idx][field] = null; delete lockedKeys[keyOf(idx, field)]; }   // emptied = cleared
+    else if (isFinite(v) && v >= 0) { job.lines[idx][field] = { inches: v, meters: v / Reduce.METERS_TO_INCHES, manual: true }; committed = true; }
+    editing = null; save();
+    if (committed) {                                     // manual commit re-selects & arms this field,
+      armed = { idx: idx, field: field };                // then runs the SAME 3s auto-lock → auto-advance as a shot
+      delete lockedKeys[keyOf(idx, field)];
+      render(); startLockCountdown();
+    } else { render(); }                                 // NaN falls through unchanged
+  }
+  function cellHTML(idx, field, label, cell) {
+    var isArmed = armed && armed.idx === idx && armed.field === field;
+    var isEditing = editing && editing.idx === idx && editing.field === field;
+    var isLocked = !isArmed && !!lockedKeys[keyOf(idx, field)];   // armed always wins over locked
+    var cls = "cell" + (cell ? "" : " empty") + (isArmed ? " armed" : "") + (isLocked ? " locked" : "") + (isEditing ? " editing" : "");
+    if (isEditing) {
+      return '<div class="' + cls + '" data-idx="' + idx + '" data-field="' + field + '">' +
+        '<span class="clabel">' + label + '</span>' +
+        '<input class="minput" type="text" inputmode="text" data-idx="' + idx + '" data-field="' + field + '" ' +
+        'value="' + esc(cellText(cell)) + '" placeholder="34 7/8" /></div>';
+    }
+    var pencil = '<span class="edit" data-idx="' + idx + '" data-field="' + field + '" title="Type by hand">&#9998;</span>';
+    var clear = cell ? '<span class="clear" data-idx="' + idx + '" data-field="' + field + '">&times;</span>' : '';
+    return '<div class="' + cls + '" data-idx="' + idx + '" data-field="' + field + '">' +
+      '<span class="clabel">' + label + '</span>' + pencil + clear + fracHTML(cell) + '<i class="lockbar"></i></div>';
+  }
+  function renderArmbar() {
+    armbar.className = "armbar" + (armed ? " live" : "");
+    if (armed) {
+      var ln = job.lines[armed.idx];
+      armText.textContent = "Armed: Line " + ln.n + " " + (armed.field === "w" ? "Width" : "Height") + " — shoot now (re-shoot overwrites)";
+    } else {
+      armText.textContent = "Tap a cell to arm the laser, then shoot — or tap ✎ to type by hand.";
+    }
+  }
+
+  /* =========================================================
+     4. Arm-and-shoot behavior (locked model, §2).
+     ========================================================= */
+  function armCell(idx, field) {
+    clearLockTimer();                                                       // changing selection voids any pending auto-lock
+    var key = keyOf(idx, field);
+    if (armed && armed.idx === idx && armed.field === field) armed = null;  // tap again to disarm
+    else { armed = { idx: idx, field: field }; delete lockedKeys[key]; }    // re-arming a locked cell unlocks it
+    render();
+  }
+  function clearLockTimer() { if (lockTimer) { clearTimeout(lockTimer); lockTimer = null; } }
+  // A value just landed in the armed cell (laser shot OR manual commit): start/restart the 3s lock window.
+  function startLockCountdown() {
+    clearLockTimer();
+    if (!armed) return;
+    var target = { idx: armed.idx, field: armed.field };
+    var el = rowsEl.querySelector('.cell[data-idx="' + target.idx + '"][data-field="' + target.field + '"]');
+    if (el) el.classList.add("counting");                                  // fires the depleting-bar cue (only live cue you can still fix it)
+    lockTimer = setTimeout(function () { lockTimer = null; lockAndAdvance(target); }, LOCK_MS);
+  }
+  // 3s elapsed with no new capture → LOCK the cell, then auto-advance to the next field.
+  function lockAndAdvance(target) {
+    if (!armed || armed.idx !== target.idx || armed.field !== target.field) return;   // selection moved → abort
+    var ln = job.lines[target.idx];
+    if (!ln || !ln[target.field]) { armed = null; render(); return; }                 // value cleared mid-countdown → nothing to lock
+    lockedKeys[keyOf(target.idx, target.field)] = true;                               // → LOCKED
+    armed = nextField(target.idx, target.field);                                      // → auto-advance (never null)
+    render();
+  }
+  // Sequence: Width → Height → next line's Width → … ; locking the LAST line's Height appends a new line.
+  function nextField(idx, field) {
+    if (field === "w") return { idx: idx, field: "h" };
+    if (idx < job.lines.length - 1) return { idx: idx + 1, field: "w" };
+    addLine();                                                             // last line's Height → append a fresh line
+    return { idx: job.lines.length - 1, field: "w" };
+  }
+  function buzz(pattern) { if (navigator.vibrate) { try { navigator.vibrate(pattern); } catch (_) {} } }
+  function fileShot(inches, meters) {
+    var reduced = Reduce.reduceInches(inches);
+    var text = reduced ? (reduced.whole + (reduced.num ? " " + reduced.num + "/" + reduced.den : "") + '"') : "—";
+    if (!armed) {                       // stray shot: ignore, but show it arrived
+      lastShot.textContent = text;
+      armbar.className = "armbar stray";
+      armText.textContent = "Shot " + text + " ignored — no cell armed. Tap a cell first.";
+      buzz([20, 40, 20]);               // distinct double-buzz = nothing filed
+      return;
+    }
+    var here = armed;                   // capture before render
+    job.lines[here.idx][here.field] = { inches: inches, meters: meters }; // latest wins while armed
+    delete lockedKeys[keyOf(here.idx, here.field)];                       // fresh value — not locked yet
+    save();
+    lastShot.textContent = "→ Line " + job.lines[here.idx].n + " " + (here.field === "w" ? "W" : "H") + "  " + text;
+    render();
+    buzz(35);                           // short buzz = landed
+    var el = rowsEl.querySelector('.cell[data-idx="' + here.idx + '"][data-field="' + here.field + '"]');
+    if (el) { el.classList.add("flash"); setTimeout(function () { el.classList.remove("flash"); }, 620); }
+    startLockCountdown();               // begin the 3s auto-lock → auto-advance window (re-shoot restarts it)
+  }
+
+  function addLine() {
+    var n = job.lines.length ? job.lines[job.lines.length - 1].n + 1 : 1;
+    job.lines.push({ n: n, room: "", mount: "", w: null, h: null }); save();
+  }
+  $("addLineBtn").addEventListener("click", function () { addLine(); render(); });
+  $("newJobBtn").addEventListener("click", function () {
+    if (!confirm("Start a new job? The current one stays saved on this phone.")) return;
+    clearLockTimer(); lockedKeys = Object.create(null);
+    job = freshJob(); armed = null; localStorage.setItem(CUR_KEY, job.id); save(); render();
+  });
+  $("jobName").addEventListener("input", function () { job.name = $("jobName").value; save(); });
+
+  /* ---- Excel ESTIMATE export (luxury layout, Apex-branded) ---- */
+  var C_INK = "FF0F0F10", C_CREAM = "FFF5F2EC", C_BRONZE = "FFB08D57", C_BRONZEHI = "FFC9A87C",
+      C_LINE = "FFD8D2C7", C_ZEBRA = "FFF7F4EE", C_MUTED = "FF8A8378";
+  function bdr(style, clr) { var c = { style: style || "thin", color: { argb: clr || C_LINE } }; return { top: c, left: c, bottom: c, right: c }; }
+  function safeName(s) { return (String(s || "estimate").replace(/[^\w\-. ]+/g, "").trim()) || "estimate"; }
+
+  async function exportExcel(blank) {
+    if (typeof ExcelJS === "undefined") { alert("Excel library didn't load — open the app online once to cache it, then retry."); return; }
+    var lines;
+    if (blank) { lines = []; for (var bi = 1; bi <= 20; bi++) lines.push({ n: bi, room: "", mount: "", w: null, h: null }); }
+    else { lines = job.lines.filter(function (ln) { return ln.room || ln.w || ln.h || ln.mount; }); if (!lines.length) { alert("Nothing to export yet — measure at least one line."); return; } }
+    try {
+      var wb = new ExcelJS.Workbook(); wb.creator = "Apex Measure Pro";
+      var ws = wb.addWorksheet("Estimate", {
+        pageSetup: { orientation: "landscape", fitToPage: true, fitToWidth: 1, fitToHeight: 0, printTitlesRow: "9:9", margins: { left: 0.4, right: 0.4, top: 0.5, bottom: 0.5, header: 0.2, footer: 0.2 } },
+        views: [{ state: "frozen", ySplit: 9 }]
+      });
+      ws.columns = [{ width: 6 }, { width: 18 }, { width: 11 }, { width: 11 }, { width: 8 },
+        { width: 20 }, { width: 22 }, { width: 14 }, { width: 6 }, { width: 13 }, { width: 14 }];
+
+      // ----- Header (white + bronze, low-ink) with bronze rule -----
+      ws.getRow(1).height = 30; ws.getRow(2).height = 18; ws.getRow(3).height = 16;
+      ws.mergeCells("C1:K1"); var h1 = ws.getCell("C1"); h1.value = "Apex Measure Pro"; h1.font = { name: "Arial Black", bold: true, size: 22, color: { argb: C_INK } }; h1.alignment = { vertical: "middle" };
+      ws.mergeCells("C2:K2"); ws.getCell("C2").value = "by Apex Installations LLC"; ws.getCell("C2").font = { name: "Arial", bold: true, size: 11, color: { argb: C_BRONZE } };
+      ws.mergeCells("C3:K3"); ws.getCell("C3").value = "Custom Window Treatments  ·  NE Oklahoma  ·  apexinstallationsok@gmail.com"; ws.getCell("C3").font = { name: "Arial", size: 9, color: { argb: "FF888078" } };
+      for (var dc = 1; dc <= 11; dc++) ws.getCell(4, dc).border = { bottom: { style: "medium", color: { argb: C_BRONZE } } };
+      ws.getRow(4).height = 5;
+      try { var resp = await fetch("logo-mark-512.png"); var ab = await resp.arrayBuffer(); var img = wb.addImage({ buffer: ab, extension: "png" }); ws.addImage(img, { tl: { col: 0.15, row: 0.12 }, ext: { width: 62, height: 62 } }); } catch (_) {}
+
+      // ----- Estimate meta (labels merged wide so nothing clips) -----
+      function lab(range, txt) { if (range.indexOf(":") > 0) ws.mergeCells(range); var c = ws.getCell(range.split(":")[0]); c.value = txt; c.font = { name: "Arial", bold: true, size: 9, color: { argb: C_BRONZE } }; c.alignment = { vertical: "middle" }; }
+      function fill(range, val, fmt) { ws.mergeCells(range); var c = ws.getCell(range.split(":")[0]); c.border = { bottom: { style: "thin", color: { argb: C_LINE } } }; if (val !== undefined) c.value = val; if (fmt) c.numFmt = fmt; c.alignment = { vertical: "middle" }; return c; }
+      [5, 6, 7].forEach(function (rn) { ws.getRow(rn).height = 16; });
+      lab("A5:B5", "PREPARED FOR"); fill("C5:E5");
+      lab("A6:B6", "PROJECT"); fill("C6:E6", blank ? undefined : job.name);
+      lab("A7:B7", "ADDRESS"); fill("C7:E7");
+      lab("G5", "ESTIMATE #"); fill("H5:I5");
+      lab("G6", "DATE"); fill("H6:I6", new Date(), "mm/dd/yyyy");
+      lab("G7", "PHONE"); fill("H7:I7");
+
+      // ----- Table header (row 9) -----
+      var heads = ["Line", "Room", "Width", "Height", "Mount", "Product", "Material / Color", "Control", "Qty", "Unit Price", "Line Total"];
+      var hrow = ws.getRow(9); hrow.height = 20;
+      heads.forEach(function (t, i) {
+        var c = hrow.getCell(i + 1); c.value = t;
+        c.font = { name: "Arial", bold: true, size: 10, color: { argb: C_INK } };
+        c.alignment = { horizontal: "center", vertical: "middle" };
+        c.border = { top: { style: "thin", color: { argb: C_LINE } }, bottom: { style: "medium", color: { argb: C_BRONZE } } };
+      });
+
+      // ----- Data rows (measured cols filled; product/color/control fillable; dropdowns) -----
+      var PRODUCTS = '"Roller Shade,Cellular Shade,Roman Shade,Wood Blind,Faux Wood Blind,Aluminum Blind,Shutter,Sheer Shade,Woven Wood,Drapery"';
+      var CONTROLS = '"Cordless,Corded,Chain,Wand,Motorized"';
+      var r = 10, first = 10;
+      lines.forEach(function (ln, i) {
+        var row = ws.getRow(r); row.height = 20;
+        row.getCell(1).value = ln.n;
+        row.getCell(2).value = ln.room || "";
+        row.getCell(3).numFmt = "# ??/??"; if (ln.w) { var rw = Reduce.reduceInches(ln.w.inches); row.getCell(3).value = rw.snapped; }
+        row.getCell(4).numFmt = "# ??/??"; if (ln.h) { var rh = Reduce.reduceInches(ln.h.inches); row.getCell(4).value = rh.snapped; }
+        row.getCell(5).value = ln.mount || "";
+        row.getCell(9).value = 1;                                  // qty default
+        row.getCell(10).numFmt = '"$"#,##0.00';
+        row.getCell(11).value = { formula: "I" + r + "*J" + r }; row.getCell(11).numFmt = '"$"#,##0.00';
+        row.getCell(5).dataValidation = { type: "list", allowBlank: true, formulae: ['"IB,OB"'] };
+        row.getCell(6).dataValidation = { type: "list", allowBlank: true, formulae: [PRODUCTS] };
+        row.getCell(8).dataValidation = { type: "list", allowBlank: true, formulae: [CONTROLS] };
+        for (var ci = 1; ci <= 11; ci++) { var c = row.getCell(ci); c.border = bdr("thin"); if (!c.font) c.font = { name: "Arial", size: 10 }; }
+        [1, 3, 4, 5, 9].forEach(function (ci) { row.getCell(ci).alignment = { horizontal: "center" }; });
+        r++;
+      });
+      var lastData = r - 1;
+
+      // ----- Totals -----
+      r += 1;
+      function total(txt, formula, big) {
+        var lc = ws.getCell("J" + r); lc.value = txt; lc.alignment = { horizontal: "right" };
+        lc.font = { name: "Arial", bold: true, size: big ? 12 : 10, color: { argb: big ? C_BRONZE : "FF333333" } };
+        var vc = ws.getCell("K" + r); vc.numFmt = '"$"#,##0.00'; if (formula) vc.value = { formula: formula };
+        vc.font = { name: "Arial", bold: !!big, size: big ? 12 : 10 };
+        vc.border = { top: { style: big ? "double" : "hair", color: { argb: big ? C_BRONZE : C_LINE } } };
+        r++;
+      }
+      total("Subtotal", "SUM(K" + first + ":K" + lastData + ")", false);
+      total("Tax", null, false);
+      total("TOTAL", "K" + (r - 2) + "+K" + (r - 1), true);
+
+      // ----- Terms + acceptance -----
+      r += 1; ws.mergeCells("A" + r + ":K" + r); var tm = ws.getCell("A" + r);
+      tm.value = "Estimate valid 30 days. Widths and heights are field-verified to the nearest 1/8\". Custom orders require a 50% deposit and are non-refundable. Balance due upon installation.";
+      tm.font = { name: "Arial", italic: true, size: 8.5, color: { argb: C_MUTED } }; tm.alignment = { wrapText: true, vertical: "top" }; ws.getRow(r).height = 38;
+      r += 2;
+      ws.getCell("A" + r).value = "Accepted by:"; ws.getCell("A" + r).font = { name: "Arial", bold: true, size: 10 }; fill("B" + r + ":E" + r);
+      ws.getCell("G" + r).value = "Date:"; ws.getCell("G" + r).font = { name: "Arial", bold: true, size: 10 }; fill("H" + r + ":I" + r);
+
+      var buf = await wb.xlsx.writeBuffer();
+      var blob = new Blob([buf], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement("a"); a.href = url; a.download = (blank ? "Apex Measure Pro Estimate Template" : safeName(job.name) + " - Apex Measure Pro Estimate") + ".xlsx";
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(function () { URL.revokeObjectURL(url); }, 1500);
+      if (!blank) {
+        var btn = $("exportBtn"); btn.classList.add("success-anim");
+        var rw = $("rows"); rw.classList.add("fading");
+        setTimeout(function() {
+          startFreshAfterExport();
+          btn.classList.remove("success-anim");
+          rw.classList.remove("fading");
+        }, 800);
+      }
+    } catch (e) { alert("Export failed: " + e.message); }
+  }
+  $("exportBtn").addEventListener("click", function () { exportExcel(false); });
+  $("templateBtn").addEventListener("click", function () { exportExcel(true); });
+
+  /* =========================================================
+     5. Bluetooth (proven layer from Phase 0/1; meters LE).
+     ========================================================= */
+  var LEICA_SERVICE = "3ab10100-f831-4395-b29d-570977d5bf94";
+  var CHAR_MEASURE  = "3ab10101-f831-4395-b29d-570977d5bf94";
+  var device = null, server = null, measureChar = null, wantConnected = false, reconnecting = false, gattBusy = Promise.resolve();
+  var dot = $("dot"), statusText = $("statusText"), statusMeta = $("statusMeta");
+  var connectBtn = $("connectBtn"), disconnectBtn = $("disconnectBtn");
+
+  function setStatus(s, t, m) { dot.className = "dot" + (s ? " " + s : ""); statusText.textContent = t; if (m !== undefined) statusMeta.textContent = m; }
+  function setConnectedUI(c) { connectBtn.style.display = c ? "none" : "inline-block"; disconnectBtn.style.display = c ? "inline-block" : "none"; }
+  function serialize(fn) { gattBusy = gattBusy.then(fn, fn); return gattBusy; }
+
+  // Keep the screen awake while connected so it can't sleep mid-measurement.
+  var wakeLock = null;
+  function requestWake() {
+    if (!("wakeLock" in navigator)) return;
+    navigator.wakeLock.request("screen").then(function (w) {
+      wakeLock = w; w.addEventListener("release", function () { wakeLock = null; });
+    }).catch(function () {});
+  }
+  function releaseWake() { if (wakeLock) { wakeLock.release().catch(function () {}); wakeLock = null; } }
+  document.addEventListener("visibilitychange", function () {
+    if (document.visibilityState === "visible" && wantConnected && !wakeLock) requestWake();
+  });
+
+  function onMeasure(ev) {
+    var dv = ev.target.value; if (dv.byteLength < 4) return;
+    var meters = dv.getFloat32(0, true);
+    var inches = Reduce.metersToInches(meters);
+    if (!isFinite(inches) || inches < 0) return;
+    fileShot(inches, meters);
+  }
+  function wireUp() {
+    return server.getPrimaryService(LEICA_SERVICE)
+      .then(function (svc) { return svc.getCharacteristic(CHAR_MEASURE); })
+      .then(function (c) { measureChar = c; return c.startNotifications(); })
+      .then(function () { measureChar.addEventListener("characteristicvaluechanged", onMeasure); });
+  }
+  function onDisconnected() {
+    measureChar = null; server = null; setConnectedUI(false);
+    if (wantConnected) { setStatus("wait", "Reconnecting…", "D2 slept — retrying, no tap needed"); autoReconnect(); }
+    else setStatus("off", "Disconnected", "");
+  }
+  function autoReconnect() {
+    if (reconnecting || !device || !wantConnected) return; reconnecting = true; var a = 0;
+    (function go() {
+      if (!wantConnected) { reconnecting = false; return; } a++;
+      device.gatt.connect().then(function (s) { server = s; return wireUp(); })
+        .then(function () { reconnecting = false; setStatus("on", "Connected — " + (device.name || "D2"), "reconnected on its own"); setConnectedUI(true); requestWake(); })
+        .catch(function () { setTimeout(go, Math.min(1000 * a, 5000)); });
+    })();
+  }
+  function connect(acceptAll) {
+    if (!navigator.bluetooth) { setStatus("off", "Web Bluetooth unavailable", "Use Chrome on Android over HTTPS."); return; }
+    setStatus("wait", "Requesting device…", "pick the DISTO");
+    var opts = acceptAll ? { acceptAllDevices: true, optionalServices: [LEICA_SERVICE] }
+      : { filters: [{ services: [LEICA_SERVICE] }, { namePrefix: "DISTO" }], optionalServices: [LEICA_SERVICE] };
+    navigator.bluetooth.requestDevice(opts)
+      .then(function (d) { device = d; wantConnected = true; device.addEventListener("gattserverdisconnected", onDisconnected); setStatus("wait", "Connecting…", ""); return device.gatt.connect(); })
+      .then(function (s) { server = s; return wireUp(); })
+      .then(function () { setStatus("on", "Connected — " + (device.name || "D2"), "arm a cell, then shoot"); setConnectedUI(true); requestWake(); })
+      .catch(function (e) { if (e && e.name === "NotFoundError") setStatus("off", "No device selected", "Tap Connect to retry."); else setStatus("off", "Connect failed", e ? e.message : "unknown"); });
+  }
+  function disconnect() { wantConnected = false; reconnecting = false; releaseWake(); if (device && device.gatt && device.gatt.connected) device.gatt.disconnect(); setStatus("off", "Disconnected", ""); setConnectedUI(false); }
+  connectBtn.addEventListener("click", function () { connect(false); });
+  disconnectBtn.addEventListener("click", disconnect);
+
+  /* =========================================================
+     7. Subscription access gate (Stripe-backed).
+        Non-invasive: enforced purely via full-screen overlays + a BLE
+        disconnect when locked. reduce.js, the capture/auto-lock logic,
+        the post-export clean-slate, and the Excel export are untouched.
+        localStorage: EMAIL_KEY (subscriber email), STATUS_KEY (cached result).
+     ========================================================= */
+  var EMAIL_KEY  = "apex.subEmail";
+  var STATUS_KEY = "apex.accessStatus";      // { active:bool, status:str, checkedAt:ms }
+  var GRACE_MS   = 5 * 24 * 60 * 60 * 1000;  // 5-day offline grace window
+  var CHECK_URL  = "/.netlify/functions/check-access";
+  var PORTAL_URL = "";                        // Stripe Customer Portal URL — fill in once enabled
+  var liveResult = null;                      // { active, status } from a successful check THIS session
+  var checkPending = false;
+
+  function lsGet(k) { try { return localStorage.getItem(k); } catch (_) { return null; } }
+  function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (_) {} }
+  function lsDel(k) { try { localStorage.removeItem(k); } catch (_) {} }
+  function getEmail() { return (lsGet(EMAIL_KEY) || "").trim().toLowerCase(); }
+  function readCached() {
+    try { var c = JSON.parse(lsGet(STATUS_KEY) || "null");
+      return (c && typeof c.active === "boolean" && typeof c.checkedAt === "number") ? c : null; }
+    catch (_) { return null; }
+  }
+  function writeCached(active, status) {
+    lsSet(STATUS_KEY, JSON.stringify({ active: !!active, status: status || (active ? "active" : "inactive"), checkedAt: Date.now() }));
+  }
+
+  // Is access currently blocked? (email is assumed present when this runs)
+  function accessLocked() {
+    if (liveResult) return !liveResult.active;                          // definitive answer this session
+    var c = readCached();
+    if (c) return ((Date.now() - c.checkedAt) <= GRACE_MS) ? !c.active : true;  // grace ≤5d, else inactive
+    return checkPending ? false : true;                                // no cache: allow while first check runs; else inactive
+  }
+
+  var gEmail, gLocked, gLockedMsg, gLockedEmail, gManage;
+  function showEl(el, on) { if (el) el.className = "gate" + (on ? " show" : ""); }
+  function applyGate() {
+    var email = getEmail();
+    if (!email) { showEl(gEmail, true); showEl(gLocked, false); return; }   // first run → must enter email
+    showEl(gEmail, false);
+    var locked = accessLocked();
+    if (locked) {
+      if (gLockedEmail) gLockedEmail.textContent = email;
+      showEl(gLocked, true);
+      if (typeof wantConnected !== "undefined" && wantConnected) disconnect();  // stop BLE so no shots land while locked
+    } else {
+      showEl(gLocked, false);
+    }
+  }
+
+  function runCheck() {
+    var email = getEmail(); if (!email) return;
+    if (typeof fetch === "undefined" || (typeof navigator !== "undefined" && navigator.onLine === false)) {
+      checkPending = false; applyGate(); return;                       // offline / no fetch → fall back to grace
+    }
+    checkPending = true; applyGate();                                  // optimistic while the request is in flight
+    fetch(CHECK_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: email }) })
+      .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }, function () { return { ok: r.ok, j: null }; }); })
+      .then(function (res) {
+        checkPending = false;
+        if (res.ok && res.j && typeof res.j.active === "boolean" && res.j.status !== "error") {
+          liveResult = { active: res.j.active, status: res.j.status };
+          writeCached(liveResult.active, liveResult.status);           // refresh the grace cache
+        }                                                              // 500 / error / malformed → keep grace fallback
+        applyGate();
+      })
+      .catch(function () { checkPending = false; applyGate(); });      // network failure → grace
+  }
+
+  function openEmailPrompt() {
+    var input = $("gateEmailInput"), err = $("gateEmailErr");
+    if (input) input.value = getEmail();
+    if (err) err.textContent = "";
+    showEl(gEmail, true); showEl(gLocked, false);
+    if (input) { try { input.focus(); } catch (_) {} }
+  }
+  function saveEmail() {
+    var input = $("gateEmailInput"), err = $("gateEmailErr");
+    var v = ((input && input.value) || "").trim().toLowerCase();
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)) { if (err) err.textContent = "Enter a valid email address."; return; }
+    lsSet(EMAIL_KEY, v);
+    liveResult = null; lsDel(STATUS_KEY);      // new email → drop any prior result + cached status
+    showEl(gEmail, false);
+    runCheck();                                 // verify the new email (applyGate runs inside)
+  }
+
+  function gateInit() {
+    try {
+      gEmail = $("gateEmail"); gLocked = $("gateLocked"); gLockedMsg = $("gateLockedMsg");
+      gLockedEmail = $("gateLockedEmail"); gManage = $("gateManage");
+      if (gManage) {
+        gManage.href = PORTAL_URL || "#";
+        gManage.addEventListener("click", function (ev) {
+          if (!PORTAL_URL) { ev.preventDefault(); if (gLockedMsg) gLockedMsg.textContent = "Your Apex Measure Pro subscription isn't active. (Manage-subscription link isn't set yet — contact Apex.)"; }
+        });
+      }
+      var save = $("gateEmailSave"); if (save) save.addEventListener("click", saveEmail);
+      var inp = $("gateEmailInput"); if (inp) inp.addEventListener("keydown", function (ev) { if (ev.key === "Enter") { ev.preventDefault(); saveEmail(); } });
+      var rc = $("gateRecheck"); if (rc) rc.addEventListener("click", runCheck);
+      var ce = $("gateChangeEmail"); if (ce) ce.addEventListener("click", openEmailPrompt);
+      var ac = $("acctChange"); if (ac) ac.addEventListener("click", openEmailPrompt);
+
+      if (!getEmail()) { applyGate(); return; }   // first run → email overlay, no network call
+      applyGate();                                 // reflect cached status immediately (optimistic if none yet)
+      runCheck();                                  // resolve real status in the background
+    } catch (_) {}
+  }
+
+  /* =========================================================
+     6. Boot: open DB, load or create the current job.
+     ========================================================= */
+  openDB().then(function (d) {
+    db = d;
+    var cur = localStorage.getItem(CUR_KEY);
+    return cur ? getJob(cur) : null;
+  }).then(function (existing) {
+    job = existing || freshJob();
+    localStorage.setItem(CUR_KEY, job.id);
+    if (!existing) save();
+    render();
+  }).catch(function () {
+    job = freshJob(); render();  // storage unavailable — still usable this session
+  });
+
+  // Register the service worker for offline use (best-effort).
+  if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(function () {});
+
+  if (!navigator.bluetooth) setStatus("off", "Web Bluetooth unavailable", "Open in Chrome on Android over HTTPS.");
+  else if (!window.isSecureContext) setStatus("off", "Not a secure context", "Web Bluetooth needs HTTPS.");
+
+  gateInit();   // subscription access gate — render UI first (above), resolve access in background
+})();
+</script>
+</body>
+</html>
