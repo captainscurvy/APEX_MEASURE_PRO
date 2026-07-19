@@ -489,6 +489,20 @@
   function bdr(style, clr) { var c = { style: style || "thin", color: { argb: clr || C_LINE } }; return { top: c, left: c, bottom: c, right: c }; }
   function safeName(s) { return (String(s || "estimate").replace(/[^\w\-. ]+/g, "").trim()) || "estimate"; }
 
+  // Deliver the finished workbook. Native app writes it to the device and opens the share
+  // sheet (email/save); the web PWA keeps its Blob download. Export DATA/layout unchanged.
+  function abToBase64(buf) {
+    var bytes = new Uint8Array(buf), bin = "", chunk = 0x8000;
+    for (var i = 0; i < bytes.length; i += chunk) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+    return btoa(bin);
+  }
+  async function nativeSaveShare(buf, filename) {
+    var FS = window.Capacitor.Plugins.Filesystem, SH = window.Capacitor.Plugins.Share;
+    var res = await FS.writeFile({ path: filename, data: abToBase64(buf), directory: "DOCUMENTS", recursive: true });
+    var uri = (res && res.uri) || (await FS.getUri({ path: filename, directory: "DOCUMENTS" })).uri;
+    try { await SH.share({ title: filename, text: "Apex Measure Pro estimate", url: uri, dialogTitle: "Send estimate" }); }
+    catch (_) { /* user dismissed the share sheet — the file is already saved on the device */ }
+  }
   async function exportExcel(blank) {
     if (typeof ExcelJS === "undefined") { alert("Excel library didn't load — open the app online once to cache it, then retry."); return; }
     var lines;
@@ -579,11 +593,16 @@
       ws.getCell("G" + r).value = "Date:"; ws.getCell("G" + r).font = { name: "Arial", bold: true, size: 10 }; fill("H" + r + ":I" + r);
 
       var buf = await wb.xlsx.writeBuffer();
-      var blob = new Blob([buf], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
-      var url = URL.createObjectURL(blob);
-      var a = document.createElement("a"); a.href = url; a.download = (blank ? "Apex Measure Pro Estimate Template" : safeName(job.name) + " - Apex Measure Pro Estimate") + ".xlsx";
-      document.body.appendChild(a); a.click(); document.body.removeChild(a);
-      setTimeout(function () { URL.revokeObjectURL(url); }, 1500);
+      var filename = (blank ? "Apex Measure Pro Estimate Template" : safeName(job.name) + " - Apex Measure Pro Estimate") + ".xlsx";
+      if (isNativeApp() && window.Capacitor.Plugins && window.Capacitor.Plugins.Filesystem && window.Capacitor.Plugins.Share) {
+        await nativeSaveShare(buf, filename);            // write to device + share sheet; throws on write failure so the clean-slate below is skipped
+      } else {
+        var blob = new Blob([buf], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement("a"); a.href = url; a.download = filename;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        setTimeout(function () { URL.revokeObjectURL(url); }, 1500);
+      }
       if (!blank) {
         var btn = $("exportBtn"); btn.classList.add("success-anim");
         var rw = $("rows"); rw.classList.add("fading");
