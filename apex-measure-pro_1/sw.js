@@ -2,8 +2,8 @@
    Cache-first for the app shell; runtime-cache same-origin GETs AND the Google
    Fonts used for the Apex look (so type survives offline after first load);
    fall back to the app on navigation when offline. Bump CACHE to force update. */
-var CACHE = "apex-measure-pro-v1";
-var ASSETS = ["./", "./index.html", "./reduce.js", "./exceljs.min.js",
+var CACHE = "apex-measure-pro-v2";
+var ASSETS = ["./", "./index.html", "./reduce.js", "./exceljs.min.js", "./ble-native.bundle.js",
   "./manifest.json", "./icon-192.png", "./icon-512.png", "./logo-mark-512.png"];
 var FONT_HOSTS = ["fonts.googleapis.com", "fonts.gstatic.com"];
 

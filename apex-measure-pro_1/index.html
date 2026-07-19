@@ -213,6 +213,8 @@
 
 <script src="reduce.js"></script>
 <script src="exceljs.min.js"></script>
+<!-- Native BLE transport (Capacitor). Loads harmlessly in the browser; only used when running as the native app. -->
+<script src="ble-native.bundle.js"></script>
 <script>
 (function () {
   "use strict";
@@ -648,7 +650,24 @@
         .catch(function () { setTimeout(go, Math.min(1000 * a, 5000)); });
     })();
   }
+  // Native (Capacitor) BLE path. The web path below is unchanged; this only runs inside the native app.
+  function isNativeBLE() { return !!(window.ApexBLE && typeof window.ApexBLE.isNative === "function" && window.ApexBLE.isNative()); }
+  function connectNative() {
+    wantConnected = true;
+    setStatus("wait", "Requesting device…", "pick the DISTO");
+    window.ApexBLE.connect({
+      service: LEICA_SERVICE, characteristic: CHAR_MEASURE,
+      onMeasure: function (meters) { var inches = Reduce.metersToInches(meters); if (!isFinite(inches) || inches < 0) return; fileShot(inches, meters); },
+      onStatus: function (s, t, m) { setStatus(s, t, m); },
+      onConnected: function (name) { setStatus("on", "Connected — " + (name || "D2"), "arm a cell, then shoot"); setConnectedUI(true); requestWake(); },
+      onReconnecting: function () { setStatus("wait", "Reconnecting…", "D2 slept — retrying, no tap needed"); setConnectedUI(false); },
+      onReconnected: function (name) { setStatus("on", "Connected — " + (name || "D2"), "reconnected on its own"); setConnectedUI(true); requestWake(); },
+      onDisconnected: function () { setConnectedUI(false); if (!wantConnected) setStatus("off", "Disconnected", ""); },
+      onError: function (e) { setStatus("off", "Connect failed", (e && e.message) ? e.message : "unknown"); }
+    });
+  }
   function connect(acceptAll) {
+    if (isNativeBLE()) return connectNative();
     if (!navigator.bluetooth) { setStatus("off", "Web Bluetooth unavailable", "Use Chrome on Android over HTTPS."); return; }
     setStatus("wait", "Requesting device…", "pick the DISTO");
     var opts = acceptAll ? { acceptAllDevices: true, optionalServices: [LEICA_SERVICE] }
@@ -659,7 +678,12 @@
       .then(function () { setStatus("on", "Connected — " + (device.name || "D2"), "arm a cell, then shoot"); setConnectedUI(true); requestWake(); })
       .catch(function (e) { if (e && e.name === "NotFoundError") setStatus("off", "No device selected", "Tap Connect to retry."); else setStatus("off", "Connect failed", e ? e.message : "unknown"); });
   }
-  function disconnect() { wantConnected = false; reconnecting = false; releaseWake(); if (device && device.gatt && device.gatt.connected) device.gatt.disconnect(); setStatus("off", "Disconnected", ""); setConnectedUI(false); }
+  function disconnect() {
+    wantConnected = false; reconnecting = false; releaseWake();
+    if (isNativeBLE()) { window.ApexBLE.disconnect(); setStatus("off", "Disconnected", ""); setConnectedUI(false); return; }
+    if (device && device.gatt && device.gatt.connected) device.gatt.disconnect();
+    setStatus("off", "Disconnected", ""); setConnectedUI(false);
+  }
   connectBtn.addEventListener("click", function () { connect(false); });
   disconnectBtn.addEventListener("click", disconnect);
 
@@ -792,7 +816,8 @@
   // Register the service worker for offline use (best-effort).
   if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(function () {});
 
-  if (!navigator.bluetooth) setStatus("off", "Web Bluetooth unavailable", "Open in Chrome on Android over HTTPS.");
+  if (isNativeBLE()) setStatus("off", "Not connected", "Tap Connect to pair the DISTO.");
+  else if (!navigator.bluetooth) setStatus("off", "Web Bluetooth unavailable", "Open in Chrome on Android over HTTPS.");
   else if (!window.isSecureContext) setStatus("off", "Not a secure context", "Web Bluetooth needs HTTPS.");
 
   gateInit();   // subscription access gate — render UI first (above), resolve access in background

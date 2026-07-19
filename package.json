@@ -4,6 +4,7 @@
   "private": true,
   "description": "Apex Measure Pro — laser measuring app. Existing web PWA (apex-measure-pro_1/) wrapped as native Android/iOS via Capacitor.",
   "scripts": {
+    "build:ble": "esbuild native-src/ble.js --bundle --format=iife --outfile=apex-measure-pro_1/ble-native.bundle.js",
     "cap:sync": "cap sync",
     "cap:copy": "cap copy",
     "android:open": "cap open android"
@@ -14,6 +15,7 @@
     "@capacitor/core": "^8.4.2"
   },
   "devDependencies": {
-    "@capacitor/cli": "^8.4.2"
+    "@capacitor/cli": "^8.4.2",
+    "esbuild": "^0.28.1"
   }
 }
