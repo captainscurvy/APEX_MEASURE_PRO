@@ -4,7 +4,8 @@
    fall back to the app on navigation when offline. Bump CACHE to force update. */
 var CACHE = "apex-measure-pro-v2";
 var ASSETS = ["./", "./index.html", "./reduce.js", "./exceljs.min.js", "./ble-native.bundle.js",
-  "./manifest.json", "./icon-192.png", "./icon-512.png", "./logo-mark-512.png"];
+  "./manifest.json", "./icon-192.png", "./icon-512.png", "./logo-mark-512.png",
+  "./fonts/inter.woff2", "./fonts/sora.woff2"];
 var FONT_HOSTS = ["fonts.googleapis.com", "fonts.gstatic.com"];
 
 self.addEventListener("install", function (e) {

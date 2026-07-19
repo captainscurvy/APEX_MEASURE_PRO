@@ -4,9 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <meta name="theme-color" content="#0F0F10" />
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<!-- Sora + Inter are self-hosted (see @font-face below) so type works fully offline in the native app, no Google CDN dependency. -->
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -16,6 +14,9 @@
 <link rel="apple-touch-icon" href="icon-192.png" />
 <title>Apex Measure Pro — Apex Installations</title>
 <style>
+  /* Self-hosted variable fonts (latin subset), so type survives with no signal. */
+  @font-face { font-family: 'Inter'; font-style: normal; font-weight: 400 600; font-display: swap; src: url('fonts/inter.woff2') format('woff2'); }
+  @font-face { font-family: 'Sora'; font-style: normal; font-weight: 600 800; font-display: swap; src: url('fonts/sora.woff2') format('woff2'); }
   /* Apex brand tokens — ported from apex_site (DESIGN.md "Refine the Chrome"). */
   :root {
     --bg: #0F0F10; --panel: #16161A; --panel-2: #1E1E23; --ink: #F5F2EC;
@@ -697,7 +698,8 @@
   var EMAIL_KEY  = "apex.subEmail";
   var STATUS_KEY = "apex.accessStatus";      // { active:bool, status:str, checkedAt:ms }
   var GRACE_MS   = 5 * 24 * 60 * 60 * 1000;  // 5-day offline grace window
-  var CHECK_URL  = "/.netlify/functions/check-access";
+  var CHECK_URL  = "/.netlify/functions/check-access";                 // web PWA (same-origin, relative)
+  var CHECK_URL_NATIVE = "https://measure.apexinstallationsok.com/.netlify/functions/check-access"; // native app (absolute — change here if the backend domain moves)
   var PORTAL_URL = "";                        // Stripe Customer Portal URL — fill in once enabled
   var liveResult = null;                      // { active, status } from a successful check THIS session
   var checkPending = false;
@@ -739,14 +741,30 @@
     }
   }
 
+  // Send the access check. Web uses same-origin fetch (unchanged). The native app has
+  // no local server, so it POSTs the ABSOLUTE url through Capacitor's native HTTP
+  // (which also sidesteps CORS). The decision logic in runCheck() is identical either way.
+  function isNativeApp() { return !!(window.Capacitor && typeof window.Capacitor.isNativePlatform === "function" && window.Capacitor.isNativePlatform()); }
+  function postAccess(email) {
+    if (isNativeApp() && window.Capacitor.Plugins && window.Capacitor.Plugins.CapacitorHttp) {
+      return window.Capacitor.Plugins.CapacitorHttp.request({
+        url: CHECK_URL_NATIVE, method: "POST",
+        headers: { "Content-Type": "application/json" }, data: { email: email }
+      }).then(function (res) {
+        var j = res.data; if (typeof j === "string") { try { j = JSON.parse(j); } catch (_) { j = null; } }
+        return { ok: res.status >= 200 && res.status < 300, j: j };
+      });
+    }
+    return fetch(CHECK_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: email }) })
+      .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }, function () { return { ok: r.ok, j: null }; }); });
+  }
   function runCheck() {
     var email = getEmail(); if (!email) return;
     if (typeof fetch === "undefined" || (typeof navigator !== "undefined" && navigator.onLine === false)) {
       checkPending = false; applyGate(); return;                       // offline / no fetch → fall back to grace
     }
     checkPending = true; applyGate();                                  // optimistic while the request is in flight
-    fetch(CHECK_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: email }) })
-      .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }, function () { return { ok: r.ok, j: null }; }); })
+    postAccess(email)
       .then(function (res) {
         checkPending = false;
         if (res.ok && res.j && typeof res.j.active === "boolean" && res.j.status !== "error") {
