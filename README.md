@@ -36,11 +36,12 @@ Access is verified by billing email against Stripe via a Netlify function (`/.ne
 - A successful check is cached with a **5-day offline grace window**, so the app keeps working without signal.
 - **Tiers:** each Stripe price maps to a tier — `price_1TtpDt...` → `full` (Laser, $29/mo), `price_1TvGKA...` → `manual` ($15/mo). An unrecognized price fails toward the more restrictive `manual` tier.
 - **Admin emails** (`ADMIN_EMAILS`, comma-separated) bypass the Stripe lookup entirely and always resolve to tier `full`. **`apexinstallationsok@gmail.com` is hardcoded into `_verify.js` in addition to the env var** — it is always an admin even if `ADMIN_EMAILS` is ever cleared or misconfigured. Additional tester emails live only in the env var and can be added/removed freely.
-- **Admin tier-preview toggle:** admins can pass `previewTier: "full"|"manual"` to `check-access` (there's a UI toggle for this) to see the app render as that tier would — access never actually locks, this only changes what's *displayed*.
+- **Admin tier-preview toggle:** admins can pass `previewTier: "full"|"manual"` to `check-access` (there's a UI toggle for this) to see the app render as that tier would — access never actually locks, this only changes what's *displayed* (including the Bluetooth gate below, so admins can verify it).
 - **Device cap:** non-admin subscribers are capped at 5 distinct devices per email per rolling 30 days, tracked in Netlify Blobs (`device-tracking` store). A 6th device returns `status: "device_limit"` without calling Stripe.
+- **Laser/Bluetooth gate:** laser capture is a Full ($29/mo) feature. On the Manual ($15/mo) tier (real subscribers, and admins previewing `manual`), the Connect button is disabled/greyed out, `connect()` refuses to run even if triggered directly, an in-progress connection is dropped immediately if the tier flips to Manual mid-session, and a small upsell line links to the Full-tier Payment Link. This is a client-side UI/UX gate — it never touches the subscription-access check itself.
 - When locked, Bluetooth is disconnected so no stray shots land — **no local job data is ever deleted**.
 
-> The gating is presentational plus a BLE disconnect; it never touches the capture, reduce, or export logic.
+> The gating is presentational (screen lock) plus the Manual-tier Bluetooth gate above; neither touches the capture, reduce, or export logic itself.
 
 ## Job History
 

@@ -45,7 +45,13 @@ TEST
 - Admins get a "Preview tier" toggle to see the Full vs Manual experience.
 - Enter a non-subscriber email -> "Subscription inactive" screen.
 - Export a priced job -> check the History button on a second "device" (private/
-  incognito window, same email) -> the job should appear.
+  incognito window, same email) -> the job should appear. If it doesn't, stay on
+  the app screen for a few seconds after exporting before switching apps/checking
+  downloads — the save request needs a moment to finish sending.
+- Toggle the admin "Preview tier" to Manual -> the Connect button should grey out
+  and disable, and a small "Upgrade to Full" line should appear. Toggle back to
+  Full -> Connect should re-enable. If you were connected to the D2 when you
+  switched to Manual, it should disconnect automatically.
 - If it stays locked on an admin email, the env vars aren't set / not
   Functions-scoped, or the functions didn't bundle (check Netlify -> Logs ->
   Functions -> check-access — "No functions deployed" means Option A/B above
