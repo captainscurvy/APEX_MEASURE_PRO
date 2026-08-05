@@ -1,6 +1,3 @@
-# Pre-bundled Netlify function (Stripe compiled in) — keep the readable source out of git.
-apex-measure-pro_1/netlify/functions/check-access.js
-
 # Internal handoff doc — Stripe IDs, payment link, admin email, strategy. Do not publish.
 apex-measure-pro_1/apex-measure-pro-handoff_1.md
 
@@ -9,3 +6,10 @@ apex-measure-pro_1/apex-measure-pro-handoff_1.md
 *.log
 .DS_Store
 Thumbs.db
+
+# Function dependencies — installed fresh at build time from package.json; never committed.
+node_modules/
+
+# Local-only verification scripts (Playwright smoke tests) — not part of the shipped app,
+# not a declared dependency of package.json. Kept out-of-repo on purpose.
+smoke-test*.js

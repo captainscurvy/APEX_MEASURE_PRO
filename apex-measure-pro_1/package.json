@@ -1,0 +1,13 @@
+{
+  "name": "apex-measure-pro",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Apex Measure Pro — Netlify Functions dependencies (subscription gating, job history).",
+  "scripts": {
+    "test": "node reduce.test.js"
+  },
+  "dependencies": {
+    "@netlify/blobs": "^10.7.12",
+    "stripe": "^22.4.0"
+  }
+}

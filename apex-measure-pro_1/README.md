@@ -9,7 +9,7 @@ Laser-measuring PWA for **Apex Installations LLC**. It pairs with a **Leica DIST
 ## What it does
 
 - **Bluetooth capture** — reads the Leica DISTO D2 measurement characteristic (little-endian float32, meters) over Web Bluetooth and files each shot into the armed cell.
-- **Arm → shoot → lock → advance** — tap a Width or Height cell to arm it, take the shot, and after a 3-second window the value locks and focus auto-advances (Width → Height → next line's Width → …). Locking the last line's Height appends a fresh line automatically.
+- **Arm → shoot → lock → advance** — tap a Width or Height cell to arm it, take the shot, and after a 3-second window the value locks and focus auto-advances. **Full tier (laser):** Width → Height → next line's Width → …, appending a fresh line after the last one's Height. **Manual tier ($15/mo) only:** Width → Height → next line's **Room name** (no timer — you type at your own pace) → that line's Width → …, so you name the room you're about to measure before you measure it.
 - **Manual entry** — the ✎ button lets you type a value by hand (`34 7/8`, `7/8`, `34.875`, or `34`); it runs through the same lock/advance flow as a laser shot. The ✕ button clears a cell.
 - **Floors to 1/8"** — the one safety-critical operation, isolated in `reduce.js` and unit-tested. A reading exactly on an eighth passes through unchanged; everything else floors down, matching how custom window treatments are ordered.
 - **Branded Excel export** — one tap produces a styled, print-ready `.xlsx` estimate (header band, embedded logo, per-line rows, product/control dropdowns, totals formulas, terms + signature block). A separate **blank template** export is also available.
@@ -30,14 +30,21 @@ Canonical example: `34.90625"` (34 29/32") → **34 7/8"**.
 
 ## Subscription gating
 
-Access is verified by billing email against Stripe via a Netlify function (`/.netlify/functions/check-access`):
+Access is verified by billing email against Stripe via a Netlify function (`/.netlify/functions/check-access`), backed by a shared verifier (`netlify/functions/_verify.js`) also used by `save-job.js` and `list-jobs.js`:
 
 - Identity is the **subscription email** — no separate accounts or access codes.
 - A successful check is cached with a **5-day offline grace window**, so the app keeps working without signal.
-- Admin emails (`ADMIN_EMAILS`) bypass the Stripe lookup server-side.
+- **Tiers:** each Stripe price maps to a tier — `price_1TtpDt...` → `full` (Laser, $29/mo), `price_1TvGKA...` → `manual` ($15/mo). An unrecognized price fails toward the more restrictive `manual` tier.
+- **Admin emails** (`ADMIN_EMAILS`, comma-separated) bypass the Stripe lookup entirely and always resolve to tier `full`. **`apexinstallationsok@gmail.com` is hardcoded into `_verify.js` in addition to the env var** — it is always an admin even if `ADMIN_EMAILS` is ever cleared or misconfigured. Additional tester emails live only in the env var and can be added/removed freely.
+- **Admin tier-preview toggle:** admins can pass `previewTier: "full"|"manual"` to `check-access` (there's a UI toggle for this) to see the app render as that tier would — access never actually locks, this only changes what's *displayed*.
+- **Device cap:** non-admin subscribers are capped at 5 distinct devices per email per rolling 30 days, tracked in Netlify Blobs (`device-tracking` store). A 6th device returns `status: "device_limit"` without calling Stripe.
 - When locked, Bluetooth is disconnected so no stray shots land — **no local job data is ever deleted**.
 
 > The gating is presentational plus a BLE disconnect; it never touches the capture, reduce, or export logic.
+
+## Job History
+
+Subscribers who export a priced job can see it again from any device signed into the same email. Right after a successful **priced** export (never the blank template), the client fires a non-blocking `POST /.netlify/functions/save-job` with a lightweight summary (job name, date, room count, room names — not the full workbook). `list-jobs.js` reads it back for the **History** panel. Storage is Netlify Blobs (`job-history` store), capped at 200 jobs per email (oldest dropped first). If saving fails, the export itself is untouched — it already succeeded.
 
 ## Data & privacy
 
@@ -61,22 +68,29 @@ manifest.json                  PWA manifest
 icon-192.png / icon-512.png    App icons (any + maskable)
 logo-mark-512.png              Logo mark used in the header and Excel export
 netlify.toml                   Netlify config (static publish + functions bundler)
+package.json                   Function dependencies (stripe, @netlify/blobs) — installed
+                               fresh at build time; never commit node_modules.
 netlify/functions/
-  check-access.js              Subscription check (Stripe). The copy in a deploy
-                               bundle is pre-bundled; keep the readable source in the repo.
+  _verify.js                   Shared subscription/tier/admin verifier — used by all three
+                               functions below. STRIPE_SECRET_KEY is read from env, never
+                               hardcoded. Do not fork this logic between functions.
+  check-access.js              Subscription + tier check, device-cap enforcement (Blobs).
+  save-job.js                  Saves a job summary to history after a priced export.
+  list-jobs.js                 Reads a subscriber's job history for the History panel.
 ```
 
 ## Local development & tests
 
 No build step — it's a static single-page app. Serve the folder over HTTPS (Web Bluetooth requires a secure context) and open it in Chrome on Android to use the laser.
 
-Run the reduce tests with Node:
+Run the tests with Node:
 
 ```bash
 node reduce.test.js
+node netlify/functions/_verify.test.js    # needs: npm install (stripe, @netlify/blobs)
 ```
 
-`reduce.test.js` is the only test file, and it must pass after any change. The capture flow (arm/lock/advance timing), the subscription-gating logic, and the Excel export data mapping are treated as locked — style them, don't rewire them.
+`_verify.test.js` covers the admin/master-email and tier-preview logic without needing a live Stripe connection — real Stripe lookups still need a smoke test against the actual account once deployed. The capture flow (arm/lock/advance timing, including the manual-tier Room-name step), the subscription-gating logic, and the Excel export data mapping are treated as locked — style them, don't rewire them without updating this doc.
 
 ## Deployment (Netlify)
 
