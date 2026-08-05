@@ -3,7 +3,7 @@
 // blank template. Independently re-verifies the subscription — never trusts
 // the client. Purely additive: does not touch capture/export/gating logic.
 const { getStore } = require("@netlify/blobs");
-const { verifyAccess } = require("./_verify");
+const { verifyAccess } = require("../lib/verify");
 
 const MAX_HISTORY = 200;
 

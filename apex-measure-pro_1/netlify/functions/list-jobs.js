@@ -1,7 +1,7 @@
 // POST { email } -> { ok:true, jobs:[...] } | 403
 // Returns the subscriber's saved job-history summaries, most recent first.
 const { getStore } = require("@netlify/blobs");
-const { verifyAccess } = require("./_verify");
+const { verifyAccess } = require("../lib/verify");
 
 exports.handler = async (event) => {
   if (event.httpMethod !== "POST") return { statusCode: 405, body: JSON.stringify({ error: "method_not_allowed" }) };

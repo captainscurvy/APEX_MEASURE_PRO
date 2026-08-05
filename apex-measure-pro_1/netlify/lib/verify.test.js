@@ -3,7 +3,7 @@
 // smoke-tested against the actual Stripe account once deployed (can't be done from
 // here without live credentials).
 const assert = require("assert");
-const { verifyAccess, isAdminEmail, MASTER_ADMIN_EMAIL } = require("./_verify");
+const { verifyAccess, isAdminEmail, MASTER_ADMIN_EMAIL } = require("./verify");
 
 (async () => {
   // 1. Master email is always admin, even with ADMIN_EMAILS unset.

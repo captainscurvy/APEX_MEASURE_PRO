@@ -5,7 +5,7 @@
 // tracked in Netlify Blobs — a 6th distinct device returns
 // { active:false, status:"device_limit" } without calling Stripe again.
 const { getStore } = require("@netlify/blobs");
-const { verifyAccess } = require("./_verify");
+const { verifyAccess } = require("../lib/verify");
 
 const DEVICE_CAP = 5;
 const DEVICE_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
