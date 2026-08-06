@@ -101,6 +101,13 @@ The site deploys to Netlify as a static publish plus one serverless function.
 2. Set environment variables (Netlify → Project configuration → Environment variables, Functions scope enabled):
    - `STRIPE_SECRET_KEY` — Stripe live secret key (`sk_live_…`)
    - `ADMIN_EMAILS` — comma-separated admin emails that bypass the Stripe check
+   - `NETLIFY_BLOBS_TOKEN` — a Netlify Personal Access Token (Netlify → User settings →
+     Applications → Personal access tokens). Required because this site's deploys don't get
+     Netlify's automatic Blobs context injection (confirmed via `MissingBlobsEnvironmentError`
+     in the function logs) — `netlify/lib/blobs.js` configures the store explicitly with this
+     token plus the auto-provided `SITE_ID` instead. Set it the same way as `STRIPE_SECRET_KEY`
+     (as a secret, per-context). This is a general account-level credential, not scoped to just
+     Blobs — treat it with the same care as the Stripe key: env var only, rotate if ever exposed.
 3. Web Bluetooth is enabled via the `Permissions-Policy: bluetooth=(self)` header in `netlify.toml`.
 
 **Smoke test:** open the site → enter an admin email → unlocks immediately; enter a non-subscriber email → "Subscription inactive" screen.

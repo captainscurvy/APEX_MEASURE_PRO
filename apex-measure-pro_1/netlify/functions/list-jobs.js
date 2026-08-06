@@ -1,6 +1,6 @@
 // POST { email } -> { ok:true, jobs:[...] } | 403
 // Returns the subscriber's saved job-history summaries, most recent first.
-const { getStore } = require("@netlify/blobs");
+const { blobStore } = require("../lib/blobs");
 const { verifyAccess } = require("../lib/verify");
 
 exports.handler = async (event) => {
@@ -19,7 +19,7 @@ exports.handler = async (event) => {
 
   const key = String(email).trim().toLowerCase();
   try {
-    const store = getStore("job-history");
+    const store = blobStore("job-history");
     const existing = (await store.get(key, { type: "json" })) || [];
     const arr = Array.isArray(existing) ? existing : [];
     const jobs = arr.slice().reverse(); // most recent first

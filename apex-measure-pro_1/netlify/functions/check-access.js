@@ -4,7 +4,7 @@
 // Real subscribers are capped at 5 distinct devices per email per 30 days,
 // tracked in Netlify Blobs — a 6th distinct device returns
 // { active:false, status:"device_limit" } without calling Stripe again.
-const { getStore } = require("@netlify/blobs");
+const { blobStore } = require("../lib/blobs");
 const { verifyAccess } = require("../lib/verify");
 
 const DEVICE_CAP = 5;
@@ -13,7 +13,7 @@ const DEVICE_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
 async function checkDeviceCap(email, deviceId) {
   if (!deviceId) return { ok: true }; // no deviceId supplied — don't block, just don't track
   try {
-    const store = getStore("device-tracking");
+    const store = blobStore("device-tracking");
     const key = email;
     const now = Date.now();
     const raw = await store.get(key, { type: "json" });

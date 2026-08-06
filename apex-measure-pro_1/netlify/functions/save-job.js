@@ -2,7 +2,7 @@
 // Called client-side right after a successful priced export. Never for the
 // blank template. Independently re-verifies the subscription — never trusts
 // the client. Purely additive: does not touch capture/export/gating logic.
-const { getStore } = require("@netlify/blobs");
+const { blobStore } = require("../lib/blobs");
 const { verifyAccess } = require("../lib/verify");
 
 const MAX_HISTORY = 200;
@@ -24,7 +24,7 @@ exports.handler = async (event) => {
 
   const key = String(email).trim().toLowerCase();
   try {
-    const store = getStore("job-history");
+    const store = blobStore("job-history");
     const existing = (await store.get(key, { type: "json" })) || [];
     const arr = Array.isArray(existing) ? existing : [];
     arr.push({
