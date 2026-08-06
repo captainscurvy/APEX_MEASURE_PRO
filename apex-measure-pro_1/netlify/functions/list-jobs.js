@@ -25,6 +25,9 @@ exports.handler = async (event) => {
     const jobs = arr.slice().reverse(); // most recent first
     return { statusCode: 200, body: JSON.stringify({ ok: true, jobs }) };
   } catch (err) {
+    // Diagnostic only — the response stays generic (no internals leaked to the client),
+    // but this makes the real cause visible in Netlify's Function logs instead of vanishing.
+    console.error("list-jobs storage_error:", err && err.name, err && err.message, err && err.stack);
     return { statusCode: 500, body: JSON.stringify({ error: "storage_error" }) };
   }
 };

@@ -37,6 +37,9 @@ exports.handler = async (event) => {
     await store.setJSON(key, arr);
     return { statusCode: 200, body: JSON.stringify({ ok: true }) };
   } catch (err) {
+    // Diagnostic only — the response stays generic (no internals leaked to the client),
+    // but this makes the real cause visible in Netlify's Function logs instead of vanishing.
+    console.error("save-job storage_error:", err && err.name, err && err.message, err && err.stack);
     return { statusCode: 500, body: JSON.stringify({ error: "storage_error" }) };
   }
 };
