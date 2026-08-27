@@ -169,9 +169,10 @@
   /* ---- Confirm dialog (reuses the .gate/.card shell) ---- */
   .confirm-actions { display: flex; gap: 10px; margin-top: 4px; }
   .confirm-actions .gbtn { flex: 1; }
-  /* .gbtn is the bronze primary by default; .ghost is the low-emphasis outline. */
-  .gbtn.ghost { background: none; color: var(--ink); border: 1px solid var(--line); box-shadow: none; }
-  .gbtn.ghost:active { background: rgba(255,255,255,.05); }
+  /* .gbtn is the bronze primary by default; .ghost is the low-emphasis outline.
+     Scoped to .gate .card so it out-specifies the base `.gate .card .gbtn` rule. */
+  .gate .card .gbtn.ghost { background: none; color: var(--ink); border: 1px solid var(--line); box-shadow: none; }
+  .gate .card .gbtn.ghost:active { background: rgba(255,255,255,.05); }
 </style>
 </head>
 <body>
