@@ -157,8 +157,21 @@
   .success-anim { font-size: 0 !important; }
   .success-anim::after { content: '\2713'; font-size: 20px; font-weight: 800; color: #14110B; text-shadow: 0 0 8px rgba(255,255,255,0.4); display: block; animation: checkPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
   @keyframes checkPop { 0% { transform: scale(0); } 100% { transform: scale(1); } }
-  #rows { transition: opacity 0.4s ease; }
-  #rows.fading { opacity: 0; }
+  /* ---- "Exported" status indicator (persists until the on-screen job changes) ---- */
+  .export-status { margin: 10px 2px 0; text-align: center; font-size: 13px; font-weight: 600;
+    border-radius: 999px; padding: 8px 12px; border: 1px solid var(--line); background: var(--panel);
+    font-variant-numeric: tabular-nums; }
+  .export-status.exported { color: var(--good); border-color: rgba(53,196,107,.4);
+    background: rgba(53,196,107,.08); }
+  .export-status.edited { color: var(--warn); border-color: rgba(224,169,78,.4);
+    background: rgba(224,169,78,.08); }
+
+  /* ---- Confirm dialog (reuses the .gate/.card shell) ---- */
+  .confirm-actions { display: flex; gap: 10px; margin-top: 4px; }
+  .confirm-actions .gbtn { flex: 1; }
+  /* .gbtn is the bronze primary by default; .ghost is the low-emphasis outline. */
+  .gbtn.ghost { background: none; color: var(--ink); border: 1px solid var(--line); box-shadow: none; }
+  .gbtn.ghost:active { background: rgba(255,255,255,.05); }
 </style>
 </head>
 <body>
@@ -189,6 +202,7 @@
 
   <button id="exportBtn" class="export-btn">Export to Excel (.xlsx)</button>
   <button id="templateBtn" class="template-btn">Blank template (fill in Excel)</button>
+  <div class="export-status" id="exportStatus" hidden></div>
   <div class="foot" id="foot">Saved on this phone · exports as Line · Room · Width · Height · Mount.<br><a class="acctlink" id="acctChange">Subscription &amp; account</a></div>
 
   <!-- Subscription access gate overlays (hidden unless needed) -->
@@ -208,6 +222,18 @@
       <a class="gbtn" id="gateManage" href="#" target="_blank" rel="noopener">Manage subscription</a>
       <div><span class="glink" id="gateRecheck">Re-check now</span><span class="glink" id="gateChangeEmail">Change email</span></div>
       <div class="who" id="gateLockedEmail"></div>
+    </div>
+  </div>
+
+  <!-- Confirm dialog for "New job" (two-tier copy set at open time) -->
+  <div class="gate" id="confirmModal">
+    <div class="card">
+      <h2 id="confirmTitle">Start a new job?</h2>
+      <p id="confirmMsg"></p>
+      <div class="confirm-actions">
+        <button class="gbtn ghost" id="confirmCancel">Cancel</button>
+        <button class="gbtn" id="confirmOk">Start new job</button>
+      </div>
     </div>
   </div>
 
@@ -267,16 +293,45 @@
     for (var i = 1; i <= 6; i++) lines.push({ n: i, room: "", mount: "", w: null, h: null });
     return { id: id, name: name, createdAt: nowISO(), updatedAt: nowISO(), lines: lines };
   }
-  function save() { if (!job) return; job.updatedAt = nowISO(); putJob(job).catch(function () {}); }
+  function save() { if (!job) return; job.updatedAt = nowISO(); putJob(job).catch(function () {}); updateExportIndicator(); }
 
-  // After a successful PRICED export: keep the exported job saved in IndexedDB, but
-  // swap the ACTIVE job to a fresh blank one so the screen is a clean slate immediately.
-  function startFreshAfterExport() {
-    clearLockTimer(); lockedKeys = Object.create(null);   // reset session lock state (change 1)
-    job = freshJob(); armed = null;                       // exported job stays in IndexedDB, untouched
-    localStorage.setItem(CUR_KEY, job.id);                // point "current job" at the new blank one
-    save();                                               // persist the new blank job
-    render();                                             // refresh UI now — no reopen needed
+  // Export-tracking (session only, NOT persisted). Set when a priced export succeeds; the
+  // "✓ Exported" indicator stays as long as the on-screen job still matches what was exported.
+  var exportedState = null;                 // { sig: string, at: ms } | null
+  var exportStatusEl = null;                // cached DOM node for the indicator
+
+  // A stable fingerprint of exactly what a priced export would contain (empty lines are
+  // filtered out of the export, so they don't count here either). Used to tell whether the
+  // on-screen job still matches the last export.
+  function jobSignature(j) {
+    if (!j) return "";
+    var lines = (j.lines || []).filter(function (ln) { return ln.room || ln.w || ln.h || ln.mount; })
+      .map(function (ln) { return [ln.n, ln.room || "", ln.mount || "",
+        ln.w ? ln.w.inches : null, ln.h ? ln.h.inches : null]; });
+    return JSON.stringify({ name: j.name || "", lines: lines });
+  }
+  // Anything worth warning about before clearing? (matches the export's own "has content" filter)
+  function jobHasData(j) {
+    return !!(j && (j.lines || []).some(function (ln) { return ln.room || ln.w || ln.h || ln.mount; }));
+  }
+  function fmtTime(ms) {
+    try { return new Date(ms).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }); }
+    catch (_) { return ""; }
+  }
+  // Reflect current export state in the indicator. Called from save() (every data mutation),
+  // from the export success path, and after "New job".
+  function updateExportIndicator() {
+    var el = exportStatusEl || (exportStatusEl = document.getElementById("exportStatus"));
+    if (!el) return;
+    if (!exportedState) { el.hidden = true; el.className = "export-status"; el.textContent = ""; return; }
+    el.hidden = false;
+    if (jobSignature(job) === exportedState.sig) {
+      el.className = "export-status exported";
+      el.textContent = "✓ Exported " + fmtTime(exportedState.at);
+    } else {
+      el.className = "export-status edited";     // on-screen data no longer matches the export
+      el.textContent = "Edited since export";
+    }
   }
 
   /* =========================================================
@@ -473,12 +528,63 @@
     job.lines.push({ n: n, room: "", mount: "", w: null, h: null }); save();
   }
   $("addLineBtn").addEventListener("click", function () { addLine(); render(); });
-  $("newJobBtn").addEventListener("click", function () {
-    if (!confirm("Start a new job? The current one stays saved on this phone.")) return;
+  // "New job" is now the ONLY thing that clears the grid — always behind a confirmation
+  // (skipped only when there's nothing to lose), with copy tuned to whether the current
+  // job was already exported.
+  function doNewJob() {
     clearLockTimer(); lockedKeys = Object.create(null);
-    job = freshJob(); armed = null; localStorage.setItem(CUR_KEY, job.id); save(); render();
+    job = freshJob(); armed = null; exportedState = null;   // clearing the grid clears the export flag
+    localStorage.setItem(CUR_KEY, job.id); save(); render();
+  }
+  $("newJobBtn").addEventListener("click", function () {
+    if (!jobHasData(job)) { doNewJob(); return; }           // empty grid → nothing to lose, no prompt
+    var exportedUnchanged = !!exportedState && jobSignature(job) === exportedState.sig;
+    if (exportedUnchanged) {
+      showConfirm({
+        title: "Start a new job?",
+        message: "This job was already exported to Excel. Starting a new job clears the grid so you can begin the next measurement.",
+        confirmLabel: "Start new job",
+        danger: false,
+        onConfirm: doNewJob
+      });
+    } else {
+      showConfirm({
+        title: "Start a new job?",
+        message: "This job hasn't been exported yet — starting a new job will permanently clear these measurements. Continue?",
+        confirmLabel: "Clear and start new",
+        danger: true,          // emphasize Cancel
+        onConfirm: doNewJob
+      });
+    }
   });
   $("jobName").addEventListener("input", function () { job.name = $("jobName").value; save(); });
+
+  /* ---- Confirm dialog (styled overlay; falls back to window.confirm if markup is missing) ---- */
+  var confirmModal, confirmTitle, confirmMsg, confirmOk, confirmCancel, confirmCb = null;
+  function hideConfirm() { if (confirmModal) confirmModal.className = "gate"; confirmCb = null; }
+  function showConfirm(o) {
+    if (!confirmModal) { if (window.confirm(o.message)) o.onConfirm(); return; }
+    confirmTitle.textContent = o.title || "Are you sure?";
+    confirmMsg.textContent = o.message || "";
+    confirmOk.textContent = o.confirmLabel || "Confirm";
+    confirmCancel.textContent = "Cancel";
+    // danger tier → Cancel is the emphasized (primary) button, Confirm is the ghost outline.
+    confirmOk.className = "gbtn" + (o.danger ? " ghost" : "");
+    confirmCancel.className = "gbtn" + (o.danger ? "" : " ghost");
+    confirmCb = o.onConfirm || null;
+    confirmModal.className = "gate show";
+    try { (o.danger ? confirmCancel : confirmOk).focus(); } catch (_) {}
+  }
+  function confirmInit() {
+    confirmModal = $("confirmModal"); confirmTitle = $("confirmTitle"); confirmMsg = $("confirmMsg");
+    confirmOk = $("confirmOk"); confirmCancel = $("confirmCancel");
+    if (confirmOk) confirmOk.addEventListener("click", function () { var cb = confirmCb; hideConfirm(); if (cb) cb(); });
+    if (confirmCancel) confirmCancel.addEventListener("click", hideConfirm);
+    if (confirmModal) confirmModal.addEventListener("click", function (ev) { if (ev.target === confirmModal) hideConfirm(); });
+    document.addEventListener("keydown", function (ev) {
+      if (ev.key === "Escape" && confirmModal && confirmModal.className.indexOf("show") >= 0) hideConfirm();
+    });
+  }
 
   /* ---- Excel ESTIMATE export (luxury layout, Apex-branded) ---- */
   var C_INK = "FF0F0F10", C_CREAM = "FFF5F2EC", C_BRONZE = "FFB08D57", C_BRONZEHI = "FFC9A87C",
@@ -582,13 +688,12 @@
       document.body.appendChild(a); a.click(); document.body.removeChild(a);
       setTimeout(function () { URL.revokeObjectURL(url); }, 1500);
       if (!blank) {
+        // Grid stays fully intact. Record what was exported and show the persistent
+        // "✓ Exported" indicator instead of wiping the screen.
+        exportedState = { sig: jobSignature(job), at: Date.now() };
+        updateExportIndicator();
         var btn = $("exportBtn"); btn.classList.add("success-anim");
-        var rw = $("rows"); rw.classList.add("fading");
-        setTimeout(function() {
-          startFreshAfterExport();
-          btn.classList.remove("success-anim");
-          rw.classList.remove("fading");
-        }, 800);
+        setTimeout(function () { btn.classList.remove("success-anim"); }, 800);
       }
     } catch (e) { alert("Export failed: " + e.message); }
   }
@@ -795,6 +900,7 @@
   if (!navigator.bluetooth) setStatus("off", "Web Bluetooth unavailable", "Open in Chrome on Android over HTTPS.");
   else if (!window.isSecureContext) setStatus("off", "Not a secure context", "Web Bluetooth needs HTTPS.");
 
+  confirmInit(); // wire the "New job" confirmation dialog
   gateInit();   // subscription access gate — render UI first (above), resolve access in background
 })();
 </script>
