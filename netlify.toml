@@ -1,0 +1,24 @@
+# Root Netlify config.
+#
+# The app lives in the apex-measure-pro_1/ subfolder, not at the repo root.
+# Without a base directory, Netlify publishes the repo root — which has no
+# index.html — so every path 404s (including the deploy previews on PRs).
+#
+# Setting `base` to the subfolder makes Netlify build/serve from there. The
+# `publish` and `functions` paths are then resolved relative to that base, so
+# they match apex-measure-pro_1/netlify.toml exactly.
+[build]
+  base = "apex-measure-pro_1"
+  publish = "."
+  functions = "netlify/functions"
+
+# Serverless functions (subscription gating). Requires a bundling deploy
+# (Git-connected build or Netlify CLI) so npm deps are installed/bundled.
+[functions]
+  node_bundler = "esbuild"
+
+# Web Bluetooth is allowed for top-level HTTPS pages by default; be explicit.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Permissions-Policy = "bluetooth=(self)"
