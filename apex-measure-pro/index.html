@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Apex Measure Pro</title>
+<meta name="description" content="Laser measurement capture for window treatments.">
+<link rel="manifest" href="./manifest.json">
+<link rel="icon" href="./icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="./icons/icon-192.png">
+<link rel="stylesheet" href="./css/tokens.css">
+<link rel="stylesheet" href="./css/app.css">
+<script>
+  // Apply a saved manual theme before first paint (per-viewer convenience).
+  try { var t = localStorage.getItem("apex-theme"); if (t === "light" || t === "dark") document.documentElement.setAttribute("data-theme", t); } catch (e) {}
+</script>
+</head>
+<body>
+<a class="skip" href="#view">Skip to content</a>
+<header class="appbar" id="appbar"></header>
+<div id="banners" class="banners"></div>
+<main id="view" class="view" tabindex="-1"></main>
+<div id="snackbar" class="snackbar" role="status" aria-live="polite"></div>
+<div id="live" class="sr-only" aria-live="polite"></div>
+<div id="print-root" class="print-root" data-theme="light"></div>
+<dialog id="confirm" class="confirm">
+  <form method="dialog">
+    <p id="confirm-text"></p>
+    <div class="row-actions">
+      <button class="btn" value="cancel">Cancel</button>
+      <button class="btn btn-danger" value="ok" id="confirm-ok">Delete</button>
+    </div>
+  </form>
+</dialog>
+<noscript><p class="fatal">Apex Measure Pro needs JavaScript. Use a current version of Chrome or Edge.</p></noscript>
+<script>
+  // §14.4 — feature detect before loading anything. Classic scripts (not ES
+  // modules) so the app also runs opened straight from disk: Chrome blocks
+  // module imports from file://.
+  (function () {
+    var missing = [];
+    if (!("noModule" in document.createElement("script"))) missing.push("modern JavaScript (ES modules)");
+    if (!("indexedDB" in window)) missing.push("IndexedDB storage");
+    if (missing.length) {
+      document.getElementById("view").innerHTML =
+        '<div class="fatal"><h1>This browser is too old</h1><p>Apex Measure Pro needs ' +
+        missing.join(" and ") + '. Open it in a current version of Chrome or Edge.</p></div>';
+      return;
+    }
+    var files = ["js/reduce.js", "js/capture.js", "js/store.js", "js/profile.js", "js/sheet.js", "js/ble.js", "js/main.js"];
+    files.forEach(function (f) {
+      var s = document.createElement("script");
+      s.src = "./" + f;
+      s.async = false;          // execute in order
+      document.body.appendChild(s);
+    });
+  })();
+</script>
+</body>
+</html>

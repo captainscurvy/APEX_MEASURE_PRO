@@ -1,0 +1,56 @@
+Apex Measure Pro — third-party notices
+======================================
+
+Apex Measure Pro is MIT licensed (see LICENSE). It vendors one third-party
+file, used only to WRITE .xlsx files in the browser:
+
+vendor/exceljs.min.js — ExcelJS 4.4.0 browser bundle (build dated 19-10-2023)
+  https://github.com/exceljs/exceljs
+  License: MIT
+  Copyright (c) 2014-2019 Guyon Roche
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy
+  of this software and associated documentation files (the "Software"), to deal
+  in the Software without restriction, including without limitation the rights
+  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+  copies of the Software, and to permit persons to whom the Software is
+  furnished to do so, subject to the following conditions:
+
+  The above copyright notice and this permission notice shall be included in
+  all copies or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+  SOFTWARE.
+
+The ExcelJS browser bundle itself includes these open-source packages, each
+under its own license as stated by its authors:
+
+  JSZip 3.10.1 ........... MIT (dual-licensed MIT or GPLv3; used under MIT)
+                           Copyright (c) 2009-2016 Stuart Knightley, David Duponchel,
+                           Franz Buchinger, António Afonso
+  pako ................... MIT and Zlib, Copyright (c) 2014-2017 Vitaly Puzrin and Andrey Tupitsin
+  sax / saxes ............ ISC
+  readable-stream ........ MIT, Node.js contributors
+  buffer, safe-buffer .... MIT, Copyright (c) Feross Aboukhadijeh
+  ieee754 ................ BSD-3-Clause, Copyright (c) 2008 Fair Oaks Labs, Inc.
+  events, process, util,
+  string_decoder,
+  inherits, util-deprecate MIT / ISC, their respective authors
+  dayjs .................. MIT, Copyright (c) 2018-present iamkun
+  fast-csv ............... MIT, Copyright (c) 2011-2019 C2FO
+  uuid ................... MIT, Copyright (c) 2010-2020 Robert Kieffer and contributors
+  tmp .................... MIT, Copyright (c) 2014 KARASZI István
+  core-js ................ MIT, Copyright (c) 2014-2023 Denis Pushkarev
+  regenerator-runtime .... MIT, Copyright (c) 2014-present Facebook, Inc.
+
+No fonts, images or other third-party assets are included. The app icons are
+original and MIT licensed with the rest of the project.
+
+Not affiliated with, endorsed by, or sponsored by Leica Geosystems AG. "Leica"
+and "DISTO" are trademarks of their respective owners and are used here only to
+describe hardware compatibility.

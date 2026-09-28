@@ -1,0 +1,7 @@
+# Netlify reads this file on drag-and-drop deploys.
+/*
+  Permissions-Policy: bluetooth=(self)
+  X-Content-Type-Options: nosniff
+
+/sw.js
+  Cache-Control: no-cache
