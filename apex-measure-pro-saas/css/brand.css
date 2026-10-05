@@ -183,10 +183,13 @@ body { font-family: var(--font-brand); -webkit-font-smoothing: antialiased; -moz
 body[data-route="home"] .view::before {
   content: "";
   display: block;
-  aspect-ratio: 1600 / 760;
+  aspect-ratio: 2400 / 1120;
   margin-bottom: 20px;
   border-radius: var(--radius-lg);
-  background: var(--brand-night) url("../brand/hero.webp") center / cover no-repeat;
+  /* 3D render (sculpture on the left, right 40% left clear) with the wordmark laid over it in the clear space */
+  background:
+    url("../brand/wordmark-on-dark.svg") right 5% center / 40% auto no-repeat,
+    var(--brand-night) url("../brand/renders/hero-3d-1800.webp") center / cover no-repeat;
   box-shadow: var(--shadow-lg);
 }
 .empty { padding: 8px 0 24px; text-align: center; }

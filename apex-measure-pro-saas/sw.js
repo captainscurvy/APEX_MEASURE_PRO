@@ -49,6 +49,8 @@ const PRECACHE = [
 const BRAND_ASSETS = [
   "./fonts/archivo-latin-var.woff2",
   "./brand/hero.webp",
+  "./brand/renders/hero-3d-1800.webp",
+  "./brand/wordmark-on-dark.svg",
   "./brand/mark-on-dark.svg"
 ];
 
