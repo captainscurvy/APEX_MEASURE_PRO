@@ -34,7 +34,7 @@ Access is verified by billing email against Stripe via a Netlify function (`/.ne
 
 - Identity is the **subscription email** — no separate accounts or access codes.
 - A successful check is cached with a **5-day offline grace window**, so the app keeps working without signal.
-- Admin emails (`ADMIN_EMAILS`) bypass the Stripe lookup server-side.
+- Admin emails (`ADMIN_EMAILS`) bypass the Stripe lookup server-side. **The owner, `apexinstallationsok@gmail.com`, is always on this list — permanent, free access.** See `CLAUDE.md`.
 - When locked, Bluetooth is disconnected so no stray shots land — **no local job data is ever deleted**.
 
 > The gating is presentational plus a BLE disconnect; it never touches the capture, reduce, or export logic.

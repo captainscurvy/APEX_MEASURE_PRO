@@ -14,7 +14,7 @@ DEPLOY (drag & drop)
 ENVIRONMENT VARIABLES (set once, in Netlify → Project configuration → Environment variables)
 --------------------------------------------------------------------------------------------
   STRIPE_SECRET_KEY = your Stripe LIVE secret key (starts sk_live_...)   [you add this]
-  ADMIN_EMAILS      = apexinstallationsok@gmail.com                       [already set on classy-liger]
+  ADMIN_EMAILS      = apexinstallationsok@gmail.com (owner, permanent) [+ others]
 Make sure the "Functions" scope is enabled for both.
 
 TEST
