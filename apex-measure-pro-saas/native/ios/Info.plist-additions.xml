@@ -1,0 +1,15 @@
+<!--
+  UNTESTED. Merge these keys into ios/App/App/Info.plist after `npx cap add ios`.
+  iOS refuses to use a permission whose usage string is missing (the app can crash on first use),
+  and App Review rejects vague strings. Keep them honest and specific.
+-->
+<key>NSBluetoothAlwaysUsageDescription</key>
+<string>Apex Measure Pro connects to your Leica DISTO laser measure over Bluetooth so measurements go straight into your window sheet. It is not used for anything else.</string>
+<key>NSMicrophoneUsageDescription</key>
+<string>The microphone is used only when you tap the voice button, so you can speak measurements instead of typing them.</string>
+<key>NSSpeechRecognitionUsageDescription</key>
+<string>Speech recognition turns the measurements you speak into numbers on your sheet.</string>
+<key>NSCameraUsageDescription</key>
+<string>The camera is used to take photos of windows and rooms that you attach to a job.</string>
+<key>NSPhotoLibraryUsageDescription</key>
+<string>Photo access lets you attach existing photos of windows and rooms to a job.</string>

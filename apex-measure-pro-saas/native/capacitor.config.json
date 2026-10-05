@@ -1,0 +1,6 @@
+{
+  "appId": "com.apexinstallationsok.measurepro",
+  "appName": "Apex Measure Pro",
+  "webDir": "..",
+  "_note": "UNTESTED. webDir points at the app folder (apex-measure-pro-saas) relative to native/. Prefer copying only the shipped web files (index.html, js/, css/, icons/, fonts/, vendor/, manifest.json) into a www/ folder and pointing webDir there; do not ship native/, tests/, docs/ or tools/ inside the app bundle."
+}

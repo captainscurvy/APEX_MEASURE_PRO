@@ -1,0 +1,346 @@
+/*
+ * brand.css — BRAND PASS 1: "The Apex Point".
+ *
+ * The whole visual identity in one layer on top of the base build:
+ * colour, type (Archivo, bundled in fonts/), and artwork (brand/, icons/).
+ * Base files are untouched. Empty this file to get the plain base back.
+ *
+ * Rules of this layer
+ *   - Every colour, shadow and gradient is a token in the blocks below.
+ *     Component rules reference tokens only.
+ *   - Orange (--signal / --laser) still means ARMED and LIVE READING.
+ *     The one brand use is the thin laser line under the app bar.
+ *   - No bronze, amber, gold, tan, brass, copper, ochre or mustard.
+ *   - Re-run node --test after changing a token (tests/brand-contrast.test.js).
+ */
+
+@font-face {
+  font-family: "Archivo";
+  src: url("../fonts/archivo-latin-var.woff2") format("woff2");
+  font-weight: 100 900;
+  font-stretch: 62% 125%;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ---------- tokens: light (default) ---------- */
+:root,
+[data-theme="light"] {
+  /* brand */
+  --brand-night:   #0B1016;   /* the Apex graphite: app bar, hero ground */
+  --brand-night-2: #141B24;
+  --brand-night-3: #1E2733;
+  --brand-line:    #2A3542;
+  --brand-ink:     #F3F1EC;   /* bone — text on the night ground */
+  --brand-ink-2:   #AEB6C1;   /* steel */
+  --laser:         #FF5A1F;   /* the laser — artwork and the app-bar line only */
+  --brand-bar:     #0B1016;
+  --theme-color:   #0B1016;   /* browser status bar follows the app bar */
+
+  /* surfaces and ink (light) */
+  --paper:       #F4F3F0;
+  --surface:     #FFFFFF;
+  --surface-2:   #FAFAF7;
+  --surface-3:   #ECEBE6;
+  --ink:         #0F141A;
+  --ink-2:       #5A6066;
+  --ink-3:       #696F77;
+  --rule:        #DEDCD6;
+  --rule-strong: #C4C1B9;
+
+  /* primary action */
+  --primary-top: #1E2733;
+  --primary-bot: #0B1016;
+  --primary-ink: #F3F1EC;
+
+  /* depth */
+  --shadow-xs: 0 1px 1px rgba(11, 16, 22, 0.05);
+  --shadow-sm: 0 1px 2px rgba(11, 16, 22, 0.06), 0 3px 8px rgba(11, 16, 22, 0.05);
+  --shadow-md: 0 2px 4px rgba(11, 16, 22, 0.06), 0 10px 24px rgba(11, 16, 22, 0.08);
+  --shadow-lg: 0 6px 12px rgba(11, 16, 22, 0.08), 0 24px 48px rgba(11, 16, 22, 0.12);
+  --shadow-primary: inset 0 1px 0 rgba(255, 255, 255, 0.10),
+                    0 1px 2px rgba(11, 16, 22, 0.30), 0 6px 16px rgba(11, 16, 22, 0.18);
+  --shadow-danger:  0 1px 2px rgba(179, 38, 30, 0.25), 0 6px 14px rgba(179, 38, 30, 0.14);
+  --shadow-signal:  0 4px 16px rgba(225, 78, 13, 0.18), 0 1px 3px rgba(225, 78, 13, 0.12);
+  --shadow-bar-top: 0 -8px 24px rgba(11, 16, 22, 0.06);
+  --ground-lift:    rgba(255, 255, 255, 0.65);
+  --laser-line: linear-gradient(90deg, transparent 0%, var(--laser) 22%, var(--laser) 78%, transparent 100%);
+
+  /* geometry + type */
+  --radius-sm: 8px;
+  --radius:    10px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --font-brand: "Archivo", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-ui: var(--font-brand);
+}
+
+/* ---------- tokens: dark (system), and the manual toggle ---------- */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --brand-bar:   #0B1016;
+    --theme-color: #0B1016;
+    --paper:       #10161D;
+    --surface:     #161E28;
+    --surface-2:   #1B2430;
+    --surface-3:   #222C39;
+    --ink:         #F3F1EC;
+    --ink-2:       #AEB6C1;
+    --ink-3:       #8E98A5;
+    --rule:        #26313E;
+    --rule-strong: #354253;
+    --signal: #F2661B; --signal-ink: #FF8A4C; --signal-wash: #2A1C14;
+    --good: #4FB477;   --bad: #E8635A;    --bad-wash: #2A1614;
+    --on-fill:     #0B1016;
+    --primary-top: #F3F1EC;
+    --primary-bot: #D8DCE2;
+    --primary-ink: #0B1016;
+    --shadow-xs: 0 1px 1px rgba(0, 0, 0, 0.35);
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.40), 0 3px 10px rgba(0, 0, 0, 0.30);
+    --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.40), 0 10px 28px rgba(0, 0, 0, 0.45);
+    --shadow-lg: 0 6px 12px rgba(0, 0, 0, 0.45), 0 24px 56px rgba(0, 0, 0, 0.55);
+    --shadow-primary: inset 0 1px 0 rgba(255, 255, 255, 0.60), 0 1px 2px rgba(0, 0, 0, 0.40), 0 6px 16px rgba(0, 0, 0, 0.35);
+    --shadow-danger:  0 1px 2px rgba(0, 0, 0, 0.40), 0 6px 14px rgba(0, 0, 0, 0.35);
+    --shadow-signal:  0 4px 20px rgba(242, 102, 27, 0.28), 0 1px 3px rgba(242, 102, 27, 0.20);
+    --shadow-bar-top: 0 -8px 24px rgba(0, 0, 0, 0.45);
+    --ground-lift:    rgba(255, 255, 255, 0.025);
+  }
+}
+:root[data-theme="dark"] {
+  --brand-bar:   #0B1016;
+  --theme-color: #0B1016;
+  --paper:       #10161D;
+  --surface:     #161E28;
+  --surface-2:   #1B2430;
+  --surface-3:   #222C39;
+  --ink:         #F3F1EC;
+  --ink-2:       #AEB6C1;
+  --ink-3:       #8E98A5;
+  --rule:        #26313E;
+  --rule-strong: #354253;
+  --signal: #F2661B; --signal-ink: #FF8A4C; --signal-wash: #2A1C14;
+  --good: #4FB477;   --bad: #E8635A;    --bad-wash: #2A1614;
+  --on-fill:     #0B1016;
+  --primary-top: #F3F1EC;
+  --primary-bot: #D8DCE2;
+  --primary-ink: #0B1016;
+  --shadow-xs: 0 1px 1px rgba(0, 0, 0, 0.35);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.40), 0 3px 10px rgba(0, 0, 0, 0.30);
+  --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.40), 0 10px 28px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 6px 12px rgba(0, 0, 0, 0.45), 0 24px 56px rgba(0, 0, 0, 0.55);
+  --shadow-primary: inset 0 1px 0 rgba(255, 255, 255, 0.60), 0 1px 2px rgba(0, 0, 0, 0.40), 0 6px 16px rgba(0, 0, 0, 0.35);
+  --shadow-danger:  0 1px 2px rgba(0, 0, 0, 0.40), 0 6px 14px rgba(0, 0, 0, 0.35);
+  --shadow-signal:  0 4px 20px rgba(242, 102, 27, 0.28), 0 1px 3px rgba(242, 102, 27, 0.20);
+  --shadow-bar-top: 0 -8px 24px rgba(0, 0, 0, 0.45);
+  --ground-lift:    rgba(255, 255, 255, 0.025);
+}
+
+/* ================= components ================= */
+
+/* page ground: one soft lift at the top, painted once (no seam) */
+body { font-family: var(--font-brand); -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+@media screen {
+  body {
+    background: radial-gradient(1200px 520px at 50% -8%, var(--ground-lift), transparent 62%) no-repeat, var(--paper);
+  }
+}
+
+/* app bar: the Apex night band with the laser line */
+.appbar {
+  background: var(--brand-bar);
+  color: var(--brand-ink);
+  border-bottom: 0;
+}
+.appbar::after {
+  content: "";
+  position: absolute; left: 0; right: 0; bottom: 0;
+  height: 1px;
+  background: var(--laser-line);
+  opacity: 0.9;
+}
+.appbar .title {
+  font-family: var(--font-brand);
+  font-stretch: 100%;
+  font-size: 17px; font-weight: 650; letter-spacing: -0.01em;
+  color: var(--brand-ink);
+}
+.appbar .icon-btn { color: var(--brand-ink); }
+.appbar .icon-btn:hover { background: var(--brand-night-2); }
+.wordmark {
+  display: flex; align-items: center; gap: 10px;
+  font-family: var(--font-brand);
+  font-stretch: 125%; font-weight: 800;
+  font-size: 13px; letter-spacing: 0.14em;
+  color: var(--brand-ink);
+}
+.wordmark::before {
+  content: "";
+  flex: 0 0 30px; height: 30px;
+  background: url("../brand/mark-on-dark.svg") center / contain no-repeat;
+}
+
+/* home: the hero artwork above the list */
+body[data-route="home"] .view::before {
+  content: "";
+  display: block;
+  aspect-ratio: 1600 / 760;
+  margin-bottom: 20px;
+  border-radius: var(--radius-lg);
+  background: var(--brand-night) url("../brand/hero.webp") center / cover no-repeat;
+  box-shadow: var(--shadow-lg);
+}
+.empty { padding: 8px 0 24px; text-align: center; }
+.empty .lede {
+  font-family: var(--font-brand); font-stretch: 112%;
+  font-size: 26px; font-weight: 700; letter-spacing: -0.01em;
+  margin-bottom: 20px;
+}
+
+/* type */
+.label {
+  font-family: var(--font-brand); font-stretch: 112%;
+  font-size: 10.5px; font-weight: 700; letter-spacing: 0.16em;
+}
+.row-title { font-size: 16px; font-weight: 650; letter-spacing: -0.005em; }
+.row-sub { font-size: 13.5px; }
+
+/* buttons: filled, lifted, pressable */
+.btn {
+  border: 0;
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  font-family: var(--font-brand); font-stretch: 104%; font-weight: 650;
+  transition: transform 80ms ease, box-shadow 120ms ease, background 120ms ease;
+}
+.btn:hover { background: var(--surface-2); }
+.btn:active { transform: translateY(1px); box-shadow: var(--shadow-xs); }
+.btn-primary {
+  background: linear-gradient(180deg, var(--primary-top), var(--primary-bot));
+  color: var(--primary-ink);
+  box-shadow: var(--shadow-primary);
+}
+.btn-primary:hover { background: linear-gradient(180deg, var(--primary-top), var(--primary-top)); }
+.btn-danger { background: var(--bad); color: var(--on-fill); box-shadow: var(--shadow-danger); }
+.btn-danger:hover { background: var(--bad); }
+.btn-ghost { background: transparent; box-shadow: none; }
+.btn-ghost:hover { background: var(--surface-3); }
+.snack .btn, .snack .btn:hover { background: transparent; box-shadow: none; }
+
+/* lists: gapped cards */
+.list { display: grid; gap: 8px; }
+.list-row {
+  border-bottom: 0;
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  animation: row-in 220ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+}
+.list-row .row-main { min-height: 68px; padding: 12px 16px; }
+.list-row:nth-child(2) { animation-delay: 40ms; }
+.list-row:nth-child(3) { animation-delay: 80ms; }
+.list-row:nth-child(4) { animation-delay: 120ms; }
+.list-row:nth-child(n+5) { animation-delay: 160ms; }
+@keyframes row-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+/* sections */
+.section { margin-top: 36px; }
+.section-head { border-bottom-color: var(--rule); padding-bottom: 8px; margin-bottom: 12px; }
+
+/* inputs: filled, with a hairline kept for sunlight legibility */
+.input, .select, .textarea {
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow-xs);
+  font-family: var(--font-brand);
+}
+
+/* segmented: pill track, selected segment lifts */
+.segmented {
+  border: 0;
+  background: var(--surface-3);
+  border-radius: var(--radius);
+  padding: 3px; gap: 2px;
+}
+.segmented button {
+  border: 0; border-radius: calc(var(--radius) - 3px);
+  background: transparent; color: var(--ink-2);
+  font-family: var(--font-brand); font-weight: 650;
+}
+.segmented button[aria-pressed="true"] {
+  background: var(--surface); color: var(--ink);
+  box-shadow: var(--shadow-sm);
+}
+
+/* the measurement: an instrument readout */
+.hero, .live {
+  font-family: var(--font-brand);
+  font-stretch: 106%;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+  letter-spacing: -0.025em;
+  line-height: 0.95;
+}
+.hero { font-size: clamp(2.75rem, 14vw, 4.25rem); }
+.hero.empty-val { font-weight: 300; }
+.live { font-size: clamp(3rem, 15vw, 4.5rem); }
+.live.waiting { font-size: 1.35rem; font-weight: 500; letter-spacing: 0; font-stretch: 100%; }
+.dim-head { border-bottom-color: var(--rule); }
+
+/* shot chips: cards; state shown with rings, never border width (no layout shift) */
+.slot {
+  border: 0;
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  transition: transform 100ms ease, box-shadow 140ms ease;
+}
+.slot:active { transform: scale(0.98); }
+.slot .val { font-family: var(--font-brand); font-stretch: 104%; font-size: 1.25rem; font-weight: 650; }
+.slot.winner { border: 0; box-shadow: var(--shadow-sm), 0 0 0 2px var(--ink); }
+.slot.armed { box-shadow: var(--shadow-signal), inset 3px 0 0 var(--signal); }
+.slot-add { background: transparent; box-shadow: none; border: 1.5px dashed var(--rule-strong); }
+
+/* armed: unmistakable — wash, signal bar, glow */
+.armed-panel {
+  border: 0;
+  border-radius: var(--radius);
+  box-shadow: inset 3px 0 0 var(--signal), var(--shadow-signal);
+  animation: armed-in 200ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+@keyframes armed-in { from { transform: scale(0.985); opacity: 0.7; } to { transform: none; opacity: 1; } }
+.choice.armed-field { border-radius: var(--radius); box-shadow: inset 3px 0 0 var(--signal), var(--shadow-signal); }
+.fracs button { border: 0; background: var(--surface); box-shadow: var(--shadow-xs); border-radius: var(--radius-sm); font-family: var(--font-brand); }
+
+/* next bar: floats above the page */
+.next-bar {
+  border-top: 0;
+  background: var(--paper);
+  box-shadow: var(--shadow-bar-top);
+}
+
+/* banners, advisories, snackbar, dialog */
+.banner { border: 0; background: var(--surface); box-shadow: var(--shadow-sm); border-radius: var(--radius); }
+.banner-bad { background: var(--bad-wash); box-shadow: inset 0 0 0 1px var(--bad); }
+.advisory { border: 0; border-radius: var(--radius-sm); box-shadow: inset 0 0 0 1px var(--bad); }
+.snack { border-radius: var(--radius); box-shadow: var(--shadow-lg); }
+.confirm { border: 0; border-radius: var(--radius-xl); box-shadow: var(--shadow-lg); }
+.confirm p { font-family: var(--font-brand); font-weight: 650; }
+
+/* pills */
+.pill { border: 0; background: var(--surface-3); color: var(--ink-2); }
+.pill-good { background: var(--surface); color: var(--good); box-shadow: inset 0 0 0 1px var(--good); }
+
+/* export preview + photos */
+.preview { border: 0; border-radius: var(--radius-lg); box-shadow: var(--shadow-md); }
+.photo { border: 0; border-radius: var(--radius-sm); box-shadow: var(--shadow-sm); }
+
+/* reduced motion: every animation and transition in this layer off */
+@media (prefers-reduced-motion: reduce) {
+  .list-row, .armed-panel { animation: none !important; }
+  .btn, .slot { transition: none !important; }
+  .btn:active, .slot:active { transform: none; }
+}

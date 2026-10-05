@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BLE Probe</title>
+<link rel="stylesheet" href="../css/tokens.css">
+<style>
+  body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--font-ui); }
+  main { max-width: 760px; margin: 0 auto; padding: 16px; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  p { margin: 0 0 12px; color: var(--ink-2); }
+  label { display: block; font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-3); margin: 12px 0 4px; }
+  input, textarea { width: 100%; min-height: 48px; padding: 10px; border: 1px solid var(--rule-strong); border-radius: var(--radius); background: var(--surface); color: var(--ink); font-family: var(--font-mono); font-size: 14px; box-sizing: border-box; }
+  textarea { min-height: 200px; }
+  button { min-height: 48px; padding: 8px 14px; border-radius: var(--radius); border: 1px solid var(--rule-strong); background: var(--surface); color: var(--ink); font: inherit; font-weight: 600; cursor: pointer; margin: 4px 4px 0 0; }
+  button.primary { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--signal); outline-offset: 2px; }
+  .char { border-top: 1px solid var(--rule); padding: 10px 0; }
+  .mono { font-family: var(--font-mono); font-size: 13px; word-break: break-all; }
+  .props { font-size: 13px; color: var(--ink-2); }
+  #log { font-family: var(--font-mono); font-size: 12px; white-space: pre-wrap; background: var(--surface); border: 1px solid var(--rule); border-radius: var(--radius); padding: 8px; max-height: 360px; overflow: auto; }
+  .bad { color: var(--bad); }
+</style>
+</head>
+<body>
+<main>
+<h1>BLE probe</h1>
+<p>Developer tool — not part of the app. Enumerates every GATT service and characteristic on a device,
+reports property flags, decodes notifications, logs raw bytes in hex, and writes test bytes. Use it to
+confirm other DISTO models and to discover the remote-trigger command (README, “Gated unknowns”).</p>
+
+<label for="uuids">Service UUIDs to request (one per line — Web Bluetooth only exposes services you name)</label>
+<textarea id="uuids" style="min-height:96px">3ab10100-f831-4395-b29d-570977d5bf94</textarea>
+<label for="prefix">Device name prefix filter (blank = show all devices)</label>
+<input id="prefix" value="DISTO">
+<div>
+  <button class="primary" id="connect" type="button">Connect</button>
+  <button id="disconnect" type="button">Disconnect</button>
+  <button id="copy" type="button">Copy report</button>
+</div>
+<p id="support" class="bad"></p>
+<div id="tree"></div>
+<label>Log</label>
+<div id="log" aria-live="polite"></div>
+</main>
+<script>
+(function () {
+  "use strict";
+  var device = null, log = [], report = [];
+  var logEl = document.getElementById("log");
+  if (!navigator.bluetooth) document.getElementById("support").textContent = "This browser has no Web Bluetooth. Use Chrome or Edge on Android or desktop.";
+
+  function hex(dv) {
+    var out = [];
+    for (var i = 0; i < dv.byteLength; i++) out.push(("0" + dv.getUint8(i).toString(16)).slice(-2).toUpperCase());
+    return out.join(" ");
+  }
+  function decode(dv) {
+    var parts = [];
+    if (dv.byteLength >= 4) {
+      var f = dv.getFloat32(0, true);
+      parts.push("float32LE=" + f + (isFinite(f) ? " (" + (f * 39.37007874015748).toFixed(4) + " in if meters)" : ""));
+      parts.push("uint32LE=" + dv.getUint32(0, true));
+    }
+    if (dv.byteLength >= 2) parts.push("uint16LE=" + dv.getUint16(0, true));
+    if (dv.byteLength >= 1) parts.push("uint8=" + dv.getUint8(0));
+    try { var s = new TextDecoder().decode(dv); if (/^[\x20-\x7e]+$/.test(s)) parts.push('utf8="' + s + '"'); } catch (e) {}
+    return parts.join("  ");
+  }
+  function say(line) {
+    var t = new Date().toISOString().slice(11, 23);
+    log.push(t + "  " + line);
+    logEl.textContent = log.slice(-400).join("\n");
+    logEl.scrollTop = logEl.scrollHeight;
+  }
+  function props(c) {
+    var p = c.properties, out = [];
+    ["broadcast", "read", "writeWithoutResponse", "write", "notify", "indicate", "authenticatedSignedWrites", "reliableWrite", "writableAuxiliaries"]
+      .forEach(function (k) { if (p[k]) out.push(k); });
+    return out.join(", ");
+  }
+  function parseHex(s) {
+    var clean = s.replace(/0x/gi, "").replace(/[^0-9a-f]/gi, "");
+    if (!clean || clean.length % 2) return null;
+    var arr = new Uint8Array(clean.length / 2);
+    for (var i = 0; i < arr.length; i++) arr[i] = parseInt(clean.substr(i * 2, 2), 16);
+    return arr;
+  }
+  function el(tag, attrs, text) {
+    var n = document.createElement(tag);
+    Object.keys(attrs || {}).forEach(function (k) { n.setAttribute(k, attrs[k]); });
+    if (text !== undefined) n.textContent = text;
+    return n;
+  }
+
+  document.getElementById("connect").onclick = async function () {
+    var uuids = document.getElementById("uuids").value.split(/\s+/).map(function (s) { return s.trim().toLowerCase(); }).filter(Boolean);
+    var prefix = document.getElementById("prefix").value.trim();
+    var opts = prefix ? { filters: [{ namePrefix: prefix }], optionalServices: uuids } : { acceptAllDevices: true, optionalServices: uuids };
+    try {
+      device = await navigator.bluetooth.requestDevice(opts);
+    } catch (e) { say("requestDevice: " + e.name + " " + e.message); return; }
+    device.addEventListener("gattserverdisconnected", function () { say("DISCONNECTED (subscriptions are gone; reconnect re-discovers)"); });
+    say("Device: " + (device.name || "(no name)") + "  id=" + device.id);
+    report = ["Device: " + (device.name || "(no name)"), "User agent: " + navigator.userAgent, ""];
+    var tree = document.getElementById("tree");
+    tree.innerHTML = "";
+    try {
+      var server = await device.gatt.connect();
+      say("GATT connected");
+      var services = await server.getPrimaryServices();
+      if (!services.length) say("No services visible — add the service UUID above.");
+      for (var i = 0; i < services.length; i++) {
+        var svc = services[i];
+        report.push("Service " + svc.uuid);
+        tree.appendChild(el("h2", { class: "mono", style: "font-size:14px;margin:16px 0 4px" }, "Service " + svc.uuid));
+        var chars = await svc.getCharacteristics();
+        for (var j = 0; j < chars.length; j++) addChar(tree, chars[j]);
+      }
+    } catch (e) { say("GATT error: " + e.name + " " + e.message); }
+  };
+
+  function addChar(tree, c) {
+    var box = el("div", { class: "char" });
+    box.appendChild(el("div", { class: "mono" }, c.uuid));
+    box.appendChild(el("div", { class: "props" }, props(c)));
+    report.push("  Characteristic " + c.uuid + "  [" + props(c) + "]");
+    if (c.properties.read) {
+      var rb = el("button", { type: "button" }, "Read");
+      rb.onclick = async function () {
+        try { var v = await c.readValue(); say("READ " + c.uuid.slice(0, 8) + "  hex=" + hex(v) + "  " + decode(v)); report.push("  read " + c.uuid.slice(0, 8) + " " + hex(v)); }
+        catch (e) { say("read failed: " + e.message); }
+      };
+      box.appendChild(rb);
+    }
+    if (c.properties.notify || c.properties.indicate) {
+      var nb = el("button", { type: "button" }, "Subscribe");
+      nb.onclick = async function () {
+        try {
+          await c.startNotifications();
+          c.addEventListener("characteristicvaluechanged", function (ev) {
+            var v = ev.target.value;
+            say("NOTIFY " + c.uuid.slice(0, 8) + "  hex=" + hex(v) + "  " + decode(v));
+          });
+          say("subscribed " + c.uuid);
+        } catch (e) { say("subscribe failed: " + e.message); }
+      };
+      box.appendChild(nb);
+    }
+    if (c.properties.write || c.properties.writeWithoutResponse) {
+      var inp = el("input", { placeholder: "hex bytes to write, e.g. 01 or 0x44 0x01", "aria-label": "Bytes to write to " + c.uuid });
+      var wb = el("button", { type: "button" }, "Write");
+      wb.onclick = async function () {
+        var bytes = parseHex(inp.value);
+        if (!bytes) { say("write: enter whole bytes in hex"); return; }
+        try {
+          if (c.properties.writeWithoutResponse && c.writeValueWithoutResponse) await c.writeValueWithoutResponse(bytes);
+          else await c.writeValue(bytes);
+          say("WRITE " + c.uuid.slice(0, 8) + "  hex=" + hex(new DataView(bytes.buffer)) + "  — watch for a NOTIFY");
+          report.push("  wrote " + c.uuid.slice(0, 8) + " " + hex(new DataView(bytes.buffer)));
+        } catch (e) { say("write failed: " + e.message); }
+      };
+      box.appendChild(inp);
+      box.appendChild(wb);
+    }
+    tree.appendChild(box);
+  }
+
+  document.getElementById("disconnect").onclick = function () { if (device && device.gatt.connected) device.gatt.disconnect(); };
+  document.getElementById("copy").onclick = function () {
+    var text = report.concat(["", "Log:"], log).join("\n");
+    if (navigator.clipboard) navigator.clipboard.writeText(text).then(function () { say("report copied"); }, function () { say(text); });
+    else say(text);
+  };
+})();
+</script>
+</body>
+</html>

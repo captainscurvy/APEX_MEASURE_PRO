@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Browser Tests</title>
+<link rel="stylesheet" href="../css/tokens.css">
+<style>
+  body { background: var(--paper); color: var(--ink); font-family: var(--font-ui); padding: 16px; }
+  li { padding: 4px 0; border-bottom: 1px solid var(--rule); }
+  .pass { color: var(--good); } .fail { color: var(--bad); font-weight: 600; }
+  pre { white-space: pre-wrap; font-family: var(--font-mono); font-size: 12px; }
+</style>
+</head>
+<body>
+<h1>Browser tests</h1>
+<p>DOM, IndexedDB and BLE (with a fake DISTO). Pure-module tests run in Node: <code>node --test</code>.</p>
+<p id="summary">Running…</p>
+<ol id="results"></ol>
+<script src="../js/reduce.js"></script>
+<script src="../js/capture.js"></script>
+<script src="../js/store.js"></script>
+<script src="../js/profile.js"></script>
+<script src="../js/sheet.js"></script>
+<script src="../js/ble.js"></script>
+<script src="./browser-suite.js"></script>
+</body>
+</html>

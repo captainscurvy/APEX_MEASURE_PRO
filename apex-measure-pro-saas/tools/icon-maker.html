@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Icon Maker</title>
+<link rel="stylesheet" href="../css/tokens.css">
+<style>
+  body { background: var(--paper); color: var(--ink); font-family: var(--font-ui); padding: 16px; }
+  canvas { border: 1px solid var(--rule); margin: 8px 8px 0 0; max-width: 160px; height: auto; }
+  a { color: var(--ink); display: inline-block; min-height: 48px; line-height: 48px; margin-right: 12px; }
+</style>
+</head>
+<body data-theme="light">
+<h1>App icon maker</h1>
+<p>Draws the §13.2 mark — an “A” in <code>--ink</code> on <code>--paper</code> with a thin <code>--signal</code> rule —
+from <code>css/tokens.css</code>. Save the three PNGs into <code>icons/</code>. To use a different mark, replace those files.</p>
+<div id="out"></div>
+<script>
+  function token(name) {
+    return getComputedStyle(document.body).getPropertyValue(name).trim();
+  }
+  // Draw the mark into a size×size canvas; inset = fraction of canvas the glyph block may use.
+  function draw(size, inset) {
+    var c = document.createElement("canvas");
+    c.width = c.height = size;
+    var g = c.getContext("2d");
+    g.fillStyle = token("--paper");
+    g.fillRect(0, 0, size, size);
+    var box = size * inset, ox = (size - box) / 2, oy = (size - box) / 2;
+    var u = box / 100;                      // glyph drawn on a 100-unit grid
+    var stroke = 11 * u;
+    g.strokeStyle = token("--ink");
+    g.lineWidth = stroke;
+    g.lineCap = "butt";
+    g.lineJoin = "miter";
+    g.beginPath();                          // the two legs, apex at top
+    g.moveTo(ox + 18 * u, oy + 80 * u);
+    g.lineTo(ox + 50 * u, oy + 10 * u);
+    g.lineTo(ox + 82 * u, oy + 80 * u);
+    g.stroke();
+    g.beginPath();                          // crossbar
+    g.moveTo(ox + 31 * u, oy + 56 * u);
+    g.lineTo(ox + 69 * u, oy + 56 * u);
+    g.stroke();
+    g.fillStyle = token("--signal");        // the single thin signal rule
+    g.fillRect(ox + 14 * u, oy + 89 * u, 72 * u, 3.5 * u);
+    return c;
+  }
+  var specs = [["icon-192.png", 192, 0.8], ["icon-512.png", 512, 0.8], ["icon-maskable-512.png", 512, 0.64]];
+  var out = document.getElementById("out");
+  window.icons = {};
+  specs.forEach(function (s) {
+    var c = draw(s[1], s[2]);
+    var url = c.toDataURL("image/png");
+    window.icons[s[0]] = url;
+    var a = document.createElement("a");
+    a.href = url; a.download = s[0]; a.textContent = "Download " + s[0];
+    out.appendChild(c); out.appendChild(a);
+  });
+</script>
+</body>
+</html>

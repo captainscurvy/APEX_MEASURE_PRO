@@ -1,0 +1,11 @@
+# Netlify (or any static host that reads _headers) applies these on deploy.
+# Replace https://*.supabase.co with your exact project URL once you have it.
+/*
+  Permissions-Policy: bluetooth=(self), microphone=(self), camera=(self), geolocation=(), usb=(), payment=()
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: no-referrer
+  Strict-Transport-Security: max-age=31536000
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https://*.supabase.co; font-src 'self'; worker-src 'self'; manifest-src 'self'; media-src 'self' blob:; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'
+
+/sw.js
+  Cache-Control: no-cache

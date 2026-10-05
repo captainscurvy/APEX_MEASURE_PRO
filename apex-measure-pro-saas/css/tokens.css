@@ -1,0 +1,59 @@
+/*
+ * tokens.css — every colour and metric in the app. No colour is hardcoded
+ * anywhere else (the sheet generator reads these at runtime).
+ *
+ * Accent allowlist (§11.1): --signal, --signal-ink, --good, --bad. Nothing
+ * else. No bronze, amber, gold, tan, brass, copper, ochre or mustard — and
+ * deliberately no --warn: advisories use --bad as an outline.
+ *
+ * Changed a token? Re-run the contrast check: node --test (tests/contrast.test.js).
+ */
+:root,
+[data-theme="light"] {
+  --paper:       #F4F3F0;   --surface:     #FFFFFF;
+  --ink:         #16181A;   --ink-2:       #5A6066;   --ink-3: #696F77;
+  --rule:        #D8D6D1;   --rule-strong: #B4B1AA;
+  --signal:      #E14E0D;   --signal-ink:  #B83D06;   --signal-wash: #FDF0E8;
+  --good:        #1F7A4D;   --bad:         #B3261E;   --bad-wash:    #FDECEA;
+  --on-fill:     #FFFFFF;   /* text on a --signal / --bad / --ink fill */
+  --scrim:       rgba(22, 24, 26, 0.45);
+
+  --tap-min:     48px;      --rule-w:      1px;       --radius:      6px;
+  --gap:         16px;      --gap-s:       8px;
+  --font-ui:   system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #121416;  --surface: #1A1D20;
+    --ink:   #ECEAE6;  --ink-2: #A0A6AC;  --ink-3: #8B9299;
+    --rule:  #2B2F33;  --rule-strong: #3C4146;
+    --signal: #F2661B; --signal-ink: #FF8A4C; --signal-wash: #2A1C14;
+    --good: #4FB477;   --bad: #E8635A;    --bad-wash: #2A1614;
+    --on-fill: #121416;
+    --scrim: rgba(0, 0, 0, 0.6);
+    color-scheme: dark;
+  }
+}
+
+/* Manual toggle wins both ways. */
+:root[data-theme="dark"] {
+  --paper: #121416;  --surface: #1A1D20;
+  --ink:   #ECEAE6;  --ink-2: #A0A6AC;  --ink-3: #8B9299;
+  --rule:  #2B2F33;  --rule-strong: #3C4146;
+  --signal: #F2661B; --signal-ink: #FF8A4C; --signal-wash: #2A1C14;
+  --good: #4FB477;   --bad: #E8635A;    --bad-wash: #2A1614;
+  --on-fill: #121416;
+  --scrim: rgba(0, 0, 0, 0.6);
+  color-scheme: dark;
+}
+
+/* polish layer: motion + geometry tokens (add-only, theme independent) */
+:root {
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --dur-fast: 90ms;
+  --dur: 160ms;
+  --radius-pill: 999px;
+}
